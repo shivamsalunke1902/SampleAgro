@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AgroMind Dashboard – Smart Farming Tools</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #F8F7F4;
+      color: #1a202c;
+    }
+    h1, h2, h3 {
+      font-family: 'Poppins', sans-serif;
+    }
+    /* Smooth Card Hover */
+    .feature-card {
+      transition: all 0.4s ease;
+      background: white;
+      border-radius: 1.2rem;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1),
+                  0 4px 6px -4px rgba(0,0,0,0.1);
+    }
+    .feature-card:hover {
+      transform: translateY(-8px) scale(1.04);
+      border-color: #16a34a;
+      box-shadow: 0 18px 30px -5px rgba(0,0,0,0.15);
+    }
+    .hero-gradient {
+      background: linear-gradient(120deg, #16a34a, #22c55e, #4ade80);
+      color: white;
+      text-align: center;
+      padding: 7rem 1rem;
+      border-bottom-left-radius: 50px;
+      border-bottom-right-radius: 50px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-gradient::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: radial-gradient(circle at top left, rgba(255,255,255,0.15), transparent 70%);
+      animation: pulse 6s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+    footer {
+      background: linear-gradient(to right, #15803d, #166534);
+      color: white;
+      text-align: center;
+      padding: 1.8rem;
+      font-size: 0.95rem;
+    }
+    .active-link {
+      color: #facc15;
+      font-weight: 600;
+      position: relative;
+    }
+    .active-link::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -4px;
+      width: 100%;
+      height: 2px;
+      background-color: #facc15;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+
+<body class="antialiased">
+
+  <!-- Header -->
+  <header class="bg-green-700 text-white sticky top-0 left-0 w-full shadow-lg z-50 transition-all duration-300">
+    <div class="container mx-auto flex justify-between items-center p-4">
+      <h1 class="text-2xl md:text-3xl font-bold flex items-center space-x-2 hover:scale-105 transition-transform duration-300">
+        <span>🌾</span><span>AgroMind Dashboard</span>
+      </h1>
+
+      <nav class="hidden md:flex space-x-6">
+        <a href="demo.html" id="homeLink" class="hover:text-yellow-300 transition-colors font-medium text-lg">Home</a>
+      </nav>
+
+      <!-- ✅ Redirects to dashboard.html -->
+      <a href="dashboard.html"
+        class="bg-yellow-400 text-black px-4 py-2 rounded-lg font-semibold hover:bg-yellow-500 hover:scale-105 transition">
+        Logout
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-gradient relative">
+    <div class="container mx-auto relative z-10">
+      <h2 class="text-5xl md:text-6xl font-bold mb-4 drop-shadow-lg">Welcome Back, Farmer 👩‍🌾</h2>
+      <p class="text-lg md:text-2xl opacity-90 max-w-3xl mx-auto leading-relaxed">
+        Your personalized smart farming tools are ready to guide you toward better yields, efficient resources, and higher profits.
+      </p>
+      <div class="mt-8">
+        <button onclick="window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })"
+          class="bg-white text-green-700 px-6 py-3 rounded-full font-semibold shadow hover:bg-yellow-300 hover:text-black transition">
+          Explore Tools ↓
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard Options -->
+  <main class="py-20 bg-gradient-to-b from-gray-50 to-green-50">
+    <div class="container mx-auto px-6 text-center">
+      <h2 class="text-4xl md:text-5xl font-bold mb-12 text-green-800">Explore Your Smart Tools</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-12 justify-center">
+
+        <!-- Crop Advisory -->
+        <div onclick="window.location.href='cropadvisory.html'"
+             class="feature-card cursor-pointer border-2 border-transparent hover:border-green-500 p-10 transition-all">
+          <div class="text-7xl mb-5 icon-glow">🌱</div>
+          <h3 class="text-xl font-semibold mb-3 text-green-800">Crop Advisory</h3>
+          <p class="text-gray-600 text-base leading-relaxed">AI-driven soil and climate-based recommendations to choose the right crop for your region.</p>
+        </div>
+
+        <!-- Price & Shelf-life Prediction -->
+        <div onclick="window.location.href='price.html'"
+             class="feature-card cursor-pointer border-2 border-transparent hover:border-green-500 p-10 transition-all">
+          <div class="text-7xl mb-5 icon-glow">📈</div>
+          <h3 class="text-xl font-semibold mb-3 text-green-800">Price & Shelf-life Prediction</h3>
+          <p class="text-gray-600 text-base leading-relaxed">Get smart predictions for market prices and crop shelf life to sell at the best time.</p>
+        </div>
+
+        <!-- Harvest & Storage Monitoring -->
+        <div onclick="window.location.href='storage.html'"
+             class="feature-card cursor-pointer border-2 border-transparent hover:border-green-500 p-10 transition-all">
+          <div class="text-7xl mb-5 icon-glow">📶</div>
+          <h3 class="text-xl font-semibold mb-3 text-green-800">Harvest & Storage Monitoring</h3>
+          <p class="text-gray-600 text-base leading-relaxed">Monitor temperature, humidity, and storage conditions in real-time using IoT technology.</p>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 <span class="font-semibold">AgroMind</span> – Intelligent Farming for a Smarter Future 🌾</p>
+  </footer>
+
+  <!-- JS: Highlight Active Nav Link -->
+  <script>
+    const currentPage = window.location.pathname.split("/").pop();
+    const homeLink = document.getElementById("homeLink");
+    if (currentPage === "demo.html") {
+      homeLink.classList.add("active-link");
+    }
+  </script>
+
+</body>
+</html>

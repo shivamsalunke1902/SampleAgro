@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Crop Manager</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .card { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        /* Custom spinner for loading states */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-top: 4px solid #10b981; /* Tailwind emerald-500 */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen">
+
+    <div id="app-container" class="max-w-4xl mx-auto space-y-8">
+        <h1 class="text-3xl font-bold text-gray-800 border-b pb-2 mb-6 flex items-center">
+            <svg class="w-8 h-8 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.142a2.493 2.493 0 010 3.328l-5.618 5.618a2.493 2.493 0 01-3.328 0l-5.618-5.618a2.493 2.493 0 010-3.328l5.618-5.618a2.493 2.493 0 013.328 0l5.618 5.618z"></path></svg>
+            Crop Management Dashboard
+        </h1>
+
+        <!-- 1. Add Crop Panel -->
+        <div class="card bg-white p-6 rounded-xl border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 3h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3l-6.928-12c-.77-1.333-2.694-1.333-3.464 0l-6.928 12c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Add New Crop
+            </h2>
+            <div class="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-3">
+                <input type="text" id="new-crop-name" placeholder="E.g., Quinoa, Blueberries, Hemp"
+                       class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 text-gray-800">
+                <button id="add-crop-btn"
+                        class="bg-emerald-600 text-white font-medium px-6 py-3 rounded-lg hover:bg-emerald-700 transition duration-150 flex items-center justify-center"
+                        onclick="addNewCrop()">
+                    <div id="add-crop-spinner" class="spinner mr-2"></div>
+                    Add New Crop
+                </button>
+            </div>
+            <p id="message-box" class="mt-3 text-sm text-red-500"></p>
+            <p class="mt-2 text-xs text-gray-500 italic">Note: This list is stored only in your browser and resets when you reload the page.</p>
+        </div>
+
+        <hr class="my-8 border-t-2 border-gray-100">
+
+        <!-- 2. Public Dropdown List & Details -->
+        <div class="card bg-white p-6 rounded-xl border border-gray-200">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                Crop Selection List
+            </h2>
+
+            <label for="crop-dropdown" class="block text-sm font-medium text-gray-700 mb-2">Select a Crop:</label>
+            <select id="crop-dropdown"
+                    class="w-full p-3 border border-gray-300 bg-white rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-800">
+                <option value="" disabled selected>Loading crops...</option>
+            </select>
+
+            <div class="mt-6 p-4 border border-blue-200 rounded-lg bg-blue-50">
+                <p class="text-sm font-medium text-blue-700 mb-2">Selected Crop Information:</p>
+                <p id="crop-details" class="text-gray-800 text-md italic">Select a crop to see its auto-generated description.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Local Application Logic -->
+    <script>
+        let crops = []; // Local array for non-persistent storage
+
+        const ADD_CROP_BUTTON = document.getElementById('add-crop-btn');
+        const NEW_CROP_INPUT = document.getElementById('new-crop-name');
+        const CROP_DROPDOWN = document.getElementById('crop-dropdown');
+        const MESSAGE_BOX = document.getElementById('message-box');
+        const ADD_CROP_SPINNER = document.getElementById('add-crop-spinner');
+
+        // Global variables must be defined here for use in the window context
+        window.addNewCrop = addNewCrop;
+
+        /**
+         * Initializes the local application.
+         */
+        function initApp() {
+            // The button is no longer disabled by default in HTML
+            updateDropdown();
+        }
+
+        /**
+         * Updates the dropdown from the local crops array.
+         */
+        function updateDropdown() {
+            let htmlOptions = '<option value="" disabled selected>Select a crop...</option>';
+            
+            crops.forEach(crop => {
+                // Use the stored name and simulated description from the local array
+                htmlOptions += `<option value="${crop.name}" data-description="${crop.description}">${crop.name}</option>`;
+            });
+
+            CROP_DROPDOWN.innerHTML = htmlOptions;
+            
+            // Setup change listener just once
+            CROP_DROPDOWN.onchange = () => {
+                const selectedOption = CROP_DROPDOWN.options[CROP_DROPDOWN.selectedIndex];
+                // Check if an option is actually selected before accessing attributes
+                if (selectedOption) {
+                    const details = selectedOption.getAttribute('data-description');
+                    document.getElementById('crop-details').textContent = details;
+                }
+            };
+            
+            if (crops.length === 0) {
+                 CROP_DROPDOWN.innerHTML = '<option value="" disabled selected>No crops added yet.</option>';
+                 document.getElementById('crop-details').textContent = 'Select a crop to see its auto-generated description.';
+            } else {
+                 // Default to the last added entry (which is now the last in the list)
+                 CROP_DROPDOWN.value = crops[crops.length - 1].name;
+                 CROP_DROPDOWN.dispatchEvent(new Event('change')); // Trigger update of details panel
+            }
+        }
+
+        /**
+         * Adds a new crop to the local array and updates the dropdown.
+         */
+        async function addNewCrop() {
+            const cropName = NEW_CROP_INPUT.value.trim();
+            if (!cropName) {
+                MESSAGE_BOX.textContent = "Please enter a crop name.";
+                return;
+            }
+            
+            // Check for duplicates in the local list
+            if (crops.some(crop => crop.name.toLowerCase() === cropName.toLowerCase())) {
+                MESSAGE_BOX.textContent = `Error: '${cropName}' is already in the list.`;
+                return;
+            }
+
+            ADD_CROP_BUTTON.disabled = true;
+            ADD_CROP_SPINNER.style.display = 'block';
+            MESSAGE_BOX.textContent = 'Simulating description generation...';
+
+            try {
+                // 1. Simulate Description Generation
+                const description = await generateCropDescription(cropName);
+
+                // 2. Add the new crop (with description) to the local array
+                crops.push({
+                    name: cropName,
+                    description: description
+                });
+
+                // 3. Update UI
+                updateDropdown();
+
+                MESSAGE_BOX.textContent = `Success! '${cropName}' added to the local list.`;
+                NEW_CROP_INPUT.value = ''; // Clear input
+
+            } catch (error) {
+                console.error("Error adding new crop:", error);
+                MESSAGE_BOX.textContent = `Failed to add crop: ${error.message}.`;
+            } finally {
+                ADD_CROP_BUTTON.disabled = false;
+                ADD_CROP_SPINNER.style.display = 'none';
+            }
+        }
+
+        // Helper function for simulated delay
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        /**
+         * Simulates generating a creative description for the crop.
+         * Includes a small delay to show the loading spinner.
+         */
+        async function generateCropDescription(cropName) {
+            await delay(500); // Simulate network latency
+
+            // Simple placeholder response
+            return `Locally generated description: ${cropName} is a valuable crop, often cultivated for its robust health benefits and adaptability to various climates.`;
+        }
+
+
+        // Initialize the application when the window loads
+        window.onload = initApp;
+    </script>
+</body>
+</html>

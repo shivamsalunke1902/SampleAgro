@@ -1,0 +1,731 @@
+
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroMind - Price Prediction Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js for data visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <!-- Custom Google Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* Base styles and theming */
+        :root {
+            --background-start: #f7fafc;
+            --background-end: #edf2f7;
+            --card-background: #ffffff;
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --border-color: #e2e8f0;
+            --sidebar-bg: #1a202c;
+            --sidebar-text: #e2e8f0;
+            --sidebar-link-hover: #2d3748;
+            --sidebar-link-active: #2c5282;
+            --accent-color: #38a169;
+            --accent-color-hover: #2f855a;
+        }
+
+        html.dark {
+            --background-start: #1a202c;
+            --background-end: #2d3748;
+            --card-background: #2d3748;
+            --text-primary: #f7fafc;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --sidebar-bg: #171923;
+            --sidebar-text: #e2e8f0;
+            --sidebar-link-hover: #2d3748;
+            --sidebar-link-active: #38a169;
+            --accent-color: #48bb78;
+            --accent-color-hover: #38a169;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--background-start);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        main {
+            background-image:
+                radial-gradient(circle at 1px 1px, var(--border-color) 1px, transparent 0);
+            background-size: 2rem 2rem;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #a0aec0; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #718096; }
+
+        /* Sidebar active link style */
+        .sidebar-link.active {
+            background: var(--sidebar-link-active);
+            color: white;
+            box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+        }
+        .sidebar-link.active svg { color: white; }
+        
+        /* General card styling */
+        .card {
+            background-color: var(--card-background);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        }
+        .card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.07), 0 4px 6px -2px rgba(0,0,0,0.05);
+        }
+        
+        /* Page transition */
+        .page-content {
+            animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tooltip */
+        .tooltip .tooltiptext {
+            visibility: hidden; width: 220px; background-color: #2d3748;
+            color: #fff; text-align: center; border-radius: 6px;
+            padding: 8px; position: absolute; z-index: 10;
+            bottom: 125%; left: 50%; margin-left: -110px;
+            opacity: 0; transition: opacity 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        
+        /* Custom slider styles */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%;
+            background: var(--accent-color); cursor: pointer; margin-top: -7px; transition: transform 0.2s;
+        }
+        input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.2); }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer; background: var(--border-color); border-radius: 4px;
+        }
+        
+        /* Price animation */
+        @keyframes gradient-animation {
+            0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }
+        }
+        .animated-gradient-text { background-size: 200% 200%; animation: gradient-animation 3s ease infinite; }
+
+        /* Live Pulse Animation */
+        .live-pulse { box-shadow: 0 0 0 0 rgba(72, 187, 120, 1); animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(72, 187, 120, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-[var(--sidebar-bg)] text-[var(--sidebar-text)] flex-shrink-0 p-4 space-y-4 flex flex-col shadow-2xl">
+        <div class="flex items-center space-x-3 mb-8 px-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[var(--accent-color)]"><path d="M11 20A7 7 0 0 1 4 13H2a10 10 0 0 0 10 10z"/><path d="M13 4a7 7 0 0 1 7 7h2a10 10 0 0 0-10-10z"/><path d="M6.34 7.34A10 10 0 0 0 4 13h2a7 7 0 0 1 6.7-5.34Z"/><path d="M17.66 16.66A10 10 0 0 0 20 11h-2a7 7 0 0 1-6.7 5.34Z"/></svg>
+            <h1 class="text-2xl font-extrabold text-white">AgroMind</h1>
+        </div>
+        <nav class="space-y-2 flex-1">
+            <a href="#" id="nav-predict" class="sidebar-link active flex items-center space-x-3 p-3 rounded-lg hover:bg-[var(--sidebar-link-hover)] transition-all duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+                <span class="font-semibold">Prediction</span>
+            </a>
+            <a href="#" id="nav-history" class="sidebar-link flex items-center space-x-3 p-3 rounded-lg hover:bg-[var(--sidebar-link-hover)] transition-all duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                <span class="font-semibold">Historical Data</span>
+            </a>
+            <a href="#" id="nav-insights" class="sidebar-link flex items-center space-x-3 p-3 rounded-lg hover:bg-[var(--sidebar-link-hover)] transition-all duration-200">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 12h3v5H7z"/><path d="M12 7h3v10h-3z"/><path d="M17 14h3v3h-3z"/></svg>
+                <span class="font-semibold">Market Insights</span>
+            </a>
+        </nav>
+        <div class="mt-auto border-t border-gray-700 pt-4">
+            <div class="flex items-center space-x-3 p-2">
+                <img src="https://placehold.co/40x40/cbd5e0/1a202c?text=F" alt="User Avatar" class="w-10 h-10 rounded-full border-2 border-[var(--accent-color)]">
+                <div>
+                    <p class="font-bold text-white">Farmer</p>
+                    <p class="text-xs text-gray-400">Pune, Maharashtra</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 lg:p-8 overflow-y-auto bg-[var(--background-end)]">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h2 id="page-title" class="text-3xl font-bold text-[var(--text-primary)]">Price Prediction</h2>
+                <p class="text-[var(--text-secondary)]" id="current-date"></p>
+            </div>
+            <div class="flex items-center space-x-4">
+                 <button id="theme-toggle" class="p-2 rounded-full bg-[var(--card-background)] text-[var(--text-secondary)] shadow-md hover:scale-110 hover:text-[var(--accent-color)] transition-all duration-200">
+                     <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+                     <svg id="theme-icon-dark" class="hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                 </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Content Sections -->
+        <div id="content-predict" class="page-content">
+            <!-- Market News & Alerts moved to the top -->
+            <div class="card p-6 rounded-2xl mb-8">
+                <h3 class="text-xl font-bold mb-4 text-[var(--text-primary)] flex items-center space-x-2">
+                    <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>
+                    <span>Market News & Alerts</span>
+                </h3>
+                <p class="text-xs text-[var(--text-secondary)] -mt-3 mb-3">Last updated: 3:10 AM IST, Sep 17, 2025 - Pune, MH</p>
+                <div id="news-container" class="space-y-3 text-sm">
+                    <!-- News items will be injected here -->
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Input Panel -->
+                <div class="lg:col-span-1 card p-6 rounded-2xl space-y-5 self-start">
+                    <div class="flex justify-between items-center border-b border-[var(--border-color)] pb-3">
+                         <h3 class="text-xl font-bold text-[var(--text-primary)]">Prediction Inputs</h3>
+                         <button id="reset-btn" class="text-sm font-semibold text-[var(--accent-color)] hover:text-[var(--accent-color-hover)]">Reset</button>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                             <div>
+                                <label for="state" class="block text-sm font-medium text-[var(--text-secondary)]">State</label>
+                                <select id="state" class="mt-1 block w-full p-2 bg-[var(--card-background)] border border-[var(--border-color)] rounded-md shadow-sm">
+                                    <option>Maharashtra</option><option>Punjab</option><option>Uttar Pradesh</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="city" class="block text-sm font-medium text-[var(--text-secondary)]">City</label>
+                                <select id="city" class="mt-1 block w-full p-2 bg-[var(--card-background)] border border-[var(--border-color)] rounded-md shadow-sm">
+                                    <option>Pune</option><option>Mumbai</option><option>Nagpur</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                             <label for="crop" class="block text-sm font-medium text-[var(--text-secondary)]">Crop Type</label>
+                             <select id="crop" class="mt-1 block w-full p-2 bg-[var(--card-background)] border border-[var(--border-color)] rounded-md shadow-sm">
+                                 <option>Paddy (Rice)</option><option>Wheat</option><option>Maize</option><option>Cotton</option><option>Sugarcane</option><option>Soybean</option><option>Onion</option><option>Potato</option>
+                             </select>
+                         </div>
+                        <div class="pt-4 border-t border-[var(--border-color)] space-y-4">
+                           <!-- Sliders -->
+                             <div class="slider-group">
+                                <label for="temp" class="block text-sm font-medium text-[var(--text-secondary)]">Avg. Temperature</label>
+                                <div class="flex items-center space-x-3">
+                                    <input type="range" id="temp" min="10" max="45" value="28" class="w-full">
+                                    <span id="temp-value" class="font-bold text-[var(--accent-color)] w-12 text-center">28°C</span>
+                                    <div class="tooltip relative"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="text-gray-400"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg><span class="tooltiptext">Average temperature for the crop's growing season. Higher or lower values can impact yield and price.</span></div>
+                                </div>
+                            </div>
+                            <div class="slider-group">
+                                <label for="supply" class="block text-sm font-medium text-[var(--text-secondary)]">Supply Volume (Quintals)</label>
+                                <div class="flex items-center space-x-3">
+                                    <input type="range" id="supply" min="100" max="5000" value="1000" step="100" class="w-full">
+                                    <span id="supply-value" class="font-bold text-[var(--accent-color)] w-20 text-center">1000</span>
+                                </div>
+                            </div>
+                             <div class="slider-group">
+                                <label for="demand" class="block text-sm font-medium text-[var(--text-secondary)]">Demand Volume (Quintals)</label>
+                                <div class="flex items-center space-x-3">
+                                    <input type="range" id="demand" min="100" max="5000" value="950" step="100" class="w-full">
+                                    <span id="demand-value" class="font-bold text-[var(--accent-color)] w-20 text-center">950</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="predict-btn" class="w-full bg-[var(--accent-color)] text-white font-bold py-3 px-4 rounded-lg hover:bg-[var(--accent-color-hover)] transition-all transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2">
+                        <span id="predict-btn-text">Predict Price</span>
+                        <div id="predict-spinner" class="hidden animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    </button>
+                </div>
+
+                <!-- Result Panel -->
+                <div class="lg:col-span-2 card p-6 rounded-2xl flex flex-col items-center justify-center space-y-4">
+                    <div class="flex items-center space-x-4">
+                        <h3 class="text-2xl font-bold text-[var(--text-primary)]">Predicted Modal Price</h3>
+                        <span id="live-indicator" class="hidden text-sm font-bold text-green-500 bg-green-100 dark:bg-green-900 dark:text-green-300 px-2 py-1 rounded-full">LIVE</span>
+                    </div>
+                    <div class="relative">
+                        <div id="price-output" data-current-price="2150" class="text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-teal-500 animated-gradient-text">₹2,150</div>
+                        <div class="tooltip absolute top-0 right-0 -mt-2 -mr-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" class="text-gray-400"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg><span class="tooltiptext" id="price-tooltip-text">Initial estimated price.</span></div>
+                    </div>
+                    <p class="text-[var(--text-secondary)]">per Quintal</p>
+                    <div class="w-full pt-4">
+                        <h4 class="font-semibold text-center mb-2 text-[var(--text-secondary)]">Supply-Demand Balance</h4>
+                        <div class="w-full bg-[var(--border-color)] rounded-full h-2.5">
+                            <div id="supply-demand-bar" class="bg-gradient-to-r from-amber-400 to-orange-500 h-2.5 rounded-full transition-all duration-500" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    <div class="w-full h-64 mt-4">
+                        <canvas id="predictionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-history" class="page-content hidden">
+             <div class="card p-6 rounded-2xl">
+                 <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold text-[var(--text-primary)]">Historical Price Trends</h3>
+                    <div class="flex items-center space-x-2 mt-4 md:mt-0">
+                         <select id="hist-crop" class="p-2 bg-[var(--card-background)] border border-[var(--border-color)] rounded-md shadow-sm">
+                             <option>Paddy (Rice)</option><option>Onion</option><option>Wheat</option>
+                         </select>
+                         <select id="hist-year" class="p-2 bg-[var(--card-background)] border border-[var(--border-color)] rounded-md shadow-sm">
+                            <option>2025</option><option>2024</option><option>2023</option>
+                         </select>
+                         <button id="download-csv" class="p-2 rounded-md bg-[var(--accent-color)] text-white hover:bg-[var(--accent-color-hover)] transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                         </button>
+                    </div>
+                 </div>
+                 <div class="w-full h-96">
+                    <canvas id="historicalPriceChart"></canvas>
+                 </div>
+            </div>
+        </div>
+
+        <div id="content-insights" class="page-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 card p-6 rounded-2xl">
+                    <h3 class="text-xl font-bold mb-4 text-[var(--text-primary)]">Top Crops by Price (Last Qtr)</h3>
+                    <div class="w-full h-72"><canvas id="topCropsChart"></canvas></div>
+                </div>
+                <div class="card p-6 rounded-2xl">
+                    <h3 class="text-xl font-bold mb-4 text-[var(--text-primary)]">Supply vs Demand</h3>
+                    <div class="w-full h-72"><canvas id="supplyDemandChart"></canvas></div>
+                </div>
+                <div class="lg:col-span-3 card p-6 rounded-2xl">
+                     <h3 class="text-xl font-bold mb-4 text-[var(--text-primary)]">3-Month Price Forecast</h3>
+                     <div class="w-full h-80"><canvas id="forecastChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="text-center text-sm text-[var(--text-secondary)] mt-8">
+            <p>AgroMind Dashboard v4.0 | Final Edition</p>
+        </footer>
+    </main>
+
+<script>
+    /**
+     * AgroMind Dashboard Application
+     * Author: Gemini
+     * Version: 4.0 (Final Edition)
+     */
+    const AgroMindApp = {
+        // --- Application State & Configuration ---
+        state: {
+            theme: 'light',
+            currentPage: 'predict',
+            charts: {},
+            currentPrice: 2150
+        },
+
+        // --- Mock Data ---
+        data: {
+            history: {
+                "Paddy (Rice)-2025":{d:[2050,2100,2080,2150,2200,2180,2250,2300,2280],l:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep']},
+                "Paddy (Rice)-2024":{d:[1980,2000,1950,2020,2050,2030,2100,2080,2120,2150,2130,2100],l:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']},
+                "Paddy (Rice)-2023":{d:[1800,1850,1820,1900,1920,1890,1950,1930,1960,1980,1970,1950],l:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']},
+                "Onion-2025":{d:[1500,1650,1550,1700,1800,1750,1900,2100,2050],l:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep']},
+                "Onion-2024":{d:[1400,1450,1380,1520,1600,1580,1650,1700,1680,1800,2200,2000],l:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']},
+                "Onion-2023":{d:[1200,1300,1250,1350,1400,1380,1420,1450,1430,1500,1480,1460],l:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']},
+                "Wheat-2025":{d:[2200,2250,2230,2300,2350,2320,2380,2400,2390],l:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep']},
+                "Wheat-2024":{d:[2100,2120,2110,2150,2180,2160,2200,2210,2230,2250,2240,2220],l:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']},
+                "Wheat-2023":{d:[2000,2010,2030,2050,2080,2060,2090,2100,2080,2120,2110,2100],l:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']},
+            },
+            insights: {
+                topCrops:{l:['Cardamom','Clove','Pepper','Cotton','Sugarcane','Paddy'],d:[120000,90000,45000,6100,3500,2280]},
+                supplyDemand:{l:['Supply','Demand'],d:[12500,11800]},
+                forecast:{l:['Oct','Nov','Dec'],hL:['Jul','Aug','Sep'],fD:[2310,2340,2380],hD:[2250,2300,2280]}
+            },
+            news: [
+                { type: 'alert', text: "Heavy rainfall expected in Nashik region, may impact Onion supply." },
+                { type: 'info', text: "Government announces increase in MSP for Wheat for the upcoming season." },
+                { type: 'success', text: "Export demand for Indian Cotton surges, prices expected to rise." },
+                { type: 'info', text: "New fertilizer subsidy policy to be rolled out next month." }
+            ]
+        },
+
+        // --- DOM Element Cache ---
+        elements: {},
+
+        /**
+         * Initializes the entire application.
+         */
+        init() {
+            document.addEventListener('DOMContentLoaded', () => {
+                this.cacheDOMElements();
+                this.initTheme();
+                this.initNavigation();
+                this.initPredictionPanel();
+                this.initDate();
+                this.populateNews();
+                this.initCharts();
+            });
+        },
+
+        /**
+         * Caches frequently used DOM elements.
+         */
+        cacheDOMElements() {
+            this.elements = {
+                themeToggle: document.getElementById('theme-toggle'),
+                lightIcon: document.getElementById('theme-icon-light'),
+                darkIcon: document.getElementById('theme-icon-dark'),
+                navLinks: document.querySelectorAll('.sidebar-link'),
+                pages: document.querySelectorAll('.page-content'),
+                pageTitle: document.getElementById('page-title'),
+                currentDate: document.getElementById('current-date'),
+                predictBtn: document.getElementById('predict-btn'),
+                sliders: document.querySelectorAll('.slider-group input[type="range"]'),
+                priceOutput: document.getElementById('price-output'),
+                liveIndicator: document.getElementById('live-indicator'),
+                supplyDemandBar: document.getElementById('supply-demand-bar'),
+                priceTooltip: document.getElementById('price-tooltip-text'),
+                newsContainer: document.getElementById('news-container'),
+                histCrop: document.getElementById('hist-crop'),
+                histYear: document.getElementById('hist-year'),
+                downloadCsvBtn: document.getElementById('download-csv'),
+            };
+        },
+
+        // --- Initialization Methods ---
+        initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+                this.setTheme('dark');
+            } else {
+                this.setTheme('light');
+            }
+            this.elements.themeToggle.addEventListener('click', () => this.toggleTheme());
+        },
+
+        initNavigation() {
+            this.elements.navLinks.forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    this.navigateTo(link.id.replace('nav-', ''));
+                });
+            });
+        },
+
+        initPredictionPanel() {
+            this.elements.sliders.forEach(slider => {
+                const display = document.getElementById(`${slider.id}-value`);
+                display.textContent = slider.value;
+                slider.addEventListener('input', () => { 
+                    display.textContent = slider.value;
+                    this.updateLivePrediction();
+                });
+            });
+
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                document.getElementById('crop').selectedIndex = 0;
+                document.getElementById('state').selectedIndex = 0;
+                document.getElementById('city').selectedIndex = 0;
+                this.elements.sliders.forEach(slider => {
+                    slider.value = slider.defaultValue;
+                    slider.dispatchEvent(new Event('input'));
+                });
+            });
+
+            this.elements.predictBtn.addEventListener('click', () => this.handlePrediction());
+        },
+
+        initDate() {
+            const today = new Date('2025-09-17T03:10:00');
+            this.elements.currentDate.textContent = today.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        },
+
+        populateNews() {
+            const newsHtml = this.data.news.map(item => {
+                const color = item.type === 'alert' ? 'red' : item.type === 'success' ? 'green' : 'blue';
+                return `<div class="flex items-start space-x-2 text-[var(--text-secondary)]">
+                    <span class="text-${color}-500 font-bold text-lg">&bull;</span>
+                    <p>${item.text}</p>
+                </div>`;
+            }).join('');
+            this.elements.newsContainer.innerHTML = newsHtml;
+        },
+
+        initCharts() {
+            this.initPredictionChart();
+            this.elements.histCrop.addEventListener('change', () => this.updateHistoricalChart());
+            this.elements.histYear.addEventListener('change', () => this.updateHistoricalChart());
+            this.elements.downloadCsvBtn.addEventListener('click', () => this.downloadHistoricalData());
+        },
+
+        // --- Core Application Logic ---
+        setTheme(theme) {
+            this.state.theme = theme;
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                this.elements.lightIcon.classList.add('hidden');
+                this.elements.darkIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                this.elements.lightIcon.classList.remove('hidden');
+                this.elements.darkIcon.classList.add('hidden');
+            }
+            this.reinitializeAllCharts();
+        },
+
+        toggleTheme() {
+            const newTheme = this.state.theme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            this.setTheme(newTheme);
+        },
+
+        navigateTo(pageId) {
+            this.state.currentPage = pageId;
+            const pageTitles = { 'predict': 'Price Prediction', 'history': 'Historical Data', 'insights': 'Market Insights' };
+            
+            this.elements.navLinks.forEach(l => l.classList.toggle('active', l.id === `nav-${pageId}`));
+            this.elements.pages.forEach(p => p.classList.toggle('hidden', p.id !== `content-${pageId}`));
+            this.elements.pageTitle.textContent = pageTitles[pageId];
+
+            if (pageId === 'history' && !this.state.charts.historical) this.initHistoricalChart();
+            if (pageId === 'insights') {
+                if (!this.state.charts.topCrops) this.initTopCropsChart();
+                if (!this.state.charts.supplyDemand) this.initSupplyDemandChart();
+                if (!this.state.charts.forecast) this.initForecastChart();
+            }
+        },
+        
+        updateLivePrediction() {
+            this.elements.liveIndicator.classList.remove('hidden');
+            const finalPrice = this.calculatePrice();
+            this.elements.priceOutput.textContent = `~ ₹${finalPrice.toLocaleString('en-IN')}`;
+            const balance = Math.min(100, (parseFloat(document.getElementById('demand').value) / parseFloat(document.getElementById('supply').value)) * 50);
+            this.elements.supplyDemandBar.style.width = `${balance}%`;
+        },
+
+        handlePrediction() {
+            this.elements.liveIndicator.classList.add('hidden');
+            const btnText = document.getElementById('predict-btn-text');
+            const spinner = document.getElementById('predict-spinner');
+            
+            btnText.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            this.elements.predictBtn.disabled = true;
+
+            setTimeout(() => {
+                const finalPrice = this.calculatePrice();
+                const startPrice = this.state.currentPrice;
+                this.animateValue(this.elements.priceOutput, startPrice, finalPrice, 1000);
+                this.state.currentPrice = finalPrice;
+                
+                this.updatePredictionChart(finalPrice);
+                
+                const demand = parseFloat(document.getElementById('demand').value);
+                const supply = parseFloat(document.getElementById('supply').value);
+                if (demand > supply * 1.1) this.elements.priceTooltip.textContent = "Price is higher as demand significantly exceeds supply.";
+                else if (supply > demand * 1.1) this.elements.priceTooltip.textContent = "Price is lower as supply significantly exceeds demand.";
+                else this.elements.priceTooltip.textContent = "Price is stable due to a balanced supply-demand ratio.";
+
+                btnText.classList.remove('hidden');
+                spinner.classList.add('hidden');
+                this.elements.predictBtn.disabled = false;
+            }, 1500);
+        },
+
+        calculatePrice() {
+            const supply = parseFloat(document.getElementById('supply').value);
+            const demand = parseFloat(document.getElementById('demand').value);
+            const basePrice = {
+                'Onion': 1800, 'Potato': 1800, 'Cotton': 6000
+            }[document.getElementById('crop').value] || 2200;
+            return Math.round(basePrice * (demand / supply));
+        },
+
+        animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const currentValue = Math.floor(progress * (end - start) + start);
+                obj.innerHTML = `₹${currentValue.toLocaleString('en-IN')}`;
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        },
+
+        // --- Chart Methods ---
+        getChartOptions() {
+            const isDark = this.state.theme === 'dark';
+            return {
+                maintainAspectRatio: false, responsive: true,
+                plugins: {
+                    legend: { labels: { color: isDark ? '#a0aec0' : '#4a5568', font: { weight: 'bold' } } },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1a202c' : '#ffffff',
+                        titleColor: isDark ? '#f7fafc' : '#1a202c',
+                        bodyColor: isDark ? '#a0aec0' : '#4a5568',
+                        padding: 12, cornerRadius: 6,
+                        borderColor: isDark ? '#4a5568' : '#e2e8f0',
+                        borderWidth: 1,
+                        callbacks: { label: c => ` ${c.dataset.label||''}: ${new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',minimumFractionDigits:0}).format(c.parsed.y)}` }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: false, grid: { color: isDark ? '#4a5568' : '#e2e8f0' }, ticks: { color: isDark ? '#a0aec0' : '#4a5568' } },
+                    x: { grid: { display: false }, ticks: { color: isDark ? '#a0aec0' : '#4a5568' } }
+                },
+                animation: { duration: 800, easing: 'easeInOutQuad' }
+            };
+        },
+        
+        initPredictionChart() {
+            const price = this.state.currentPrice;
+            if(this.state.charts.prediction) this.state.charts.prediction.destroy();
+            const ctx = document.getElementById('predictionChart').getContext('2d');
+            this.state.charts.prediction = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Min Price', 'Predicted', 'Max Price'],
+                    datasets: [{
+                        label: 'Price Range (₹/Qtl)',
+                        data: [price * 0.85, price, price * 1.15],
+                        backgroundColor: ['rgba(236,151,64,0.6)', 'rgba(66,153,225,0.8)', 'rgba(227,82,82,0.6)'],
+                        borderColor: ['#d69e2e', '#4299e1', '#e53e3e'],
+                        borderWidth: 2, borderRadius: 6,
+                    }]
+                },
+                options: { ...this.getChartOptions(), indexAxis: 'y', plugins: { ...this.getChartOptions().plugins, legend: { display: false } } }
+            });
+        },
+        updatePredictionChart(price) {
+            if(!this.state.charts.prediction) return;
+            this.state.charts.prediction.data.datasets[0].data = [price * 0.85, price, price * 1.15];
+            this.state.charts.prediction.update();
+        },
+        
+        initHistoricalChart() {
+            if(this.state.charts.historical) this.state.charts.historical.destroy();
+            const ctx = document.getElementById('historicalPriceChart').getContext('2d');
+            const key = `${this.elements.histCrop.value}-${this.elements.histYear.value}`;
+            const {d, l} = this.data.history[key];
+            this.state.charts.historical = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: l,
+                    datasets: [{
+                        label: 'Price (₹/Qtl)', data: d, fill: 'start', borderColor: 'var(--accent-color)',
+                        backgroundColor: 'rgba(56, 161, 105, 0.1)', tension: 0.4, pointRadius: 2,
+                    }]
+                },
+                options: this.getChartOptions()
+            });
+        },
+        updateHistoricalChart() {
+            if(!this.state.charts.historical) return;
+            const key = `${this.elements.histCrop.value}-${this.elements.histYear.value}`;
+            const {d, l} = this.data.history[key];
+            this.state.charts.historical.data.labels = l;
+            this.state.charts.historical.data.datasets[0].data = d;
+            this.state.charts.historical.update();
+        },
+        downloadHistoricalData() {
+            const key = `${this.elements.histCrop.value}-${this.elements.histYear.value}`;
+            const { d, l } = this.data.history[key];
+            let csvContent = "data:text/csv;charset=utf-8,Month,Price (INR/Qtl)\n";
+            l.forEach((month, index) => {
+                csvContent += `${month},${d[index]}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `historical_data_${key}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        },
+        
+        initTopCropsChart() {
+            if(this.state.charts.topCrops) this.state.charts.topCrops.destroy();
+            const ctx = document.getElementById('topCropsChart').getContext('2d');
+            this.state.charts.topCrops = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: this.data.insights.topCrops.l,
+                    datasets: [{
+                        label: 'Avg Price (₹/Qtl)', data: this.data.insights.topCrops.d,
+                        backgroundColor: ['#553c9a','#805ad5','#b794f4','#38a169','#f6ad55','#48bb78'], borderRadius: 6,
+                    }]
+                },
+                options: { ...this.getChartOptions(), scales: { ...this.getChartOptions().scales, y: { ...this.getChartOptions().scales.y, type: 'logarithmic' } } }
+            });
+        },
+        initSupplyDemandChart() {
+            if(this.state.charts.supplyDemand) this.state.charts.supplyDemand.destroy();
+            const ctx = document.getElementById('supplyDemandChart').getContext('2d');
+            this.state.charts.supplyDemand = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: this.data.insights.supplyDemand.l,
+                    datasets: [{
+                        data: this.data.insights.supplyDemand.d,
+                        backgroundColor: ['#4299e1', '#f56565'],
+                        borderColor: 'var(--card-background)', borderWidth: 6,
+                    }]
+                },
+                options: { ...this.getChartOptions(), cutout: '75%' }
+            });
+        },
+        initForecastChart() {
+            if(this.state.charts.forecast) this.state.charts.forecast.destroy();
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            const {l,hL,fD,hD} = this.data.insights.forecast;
+            this.state.charts.forecast = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [...hL, ...l],
+                    datasets: [{
+                        label: 'Forecast', data: [null, null, hD[hD.length-1], ...fD],
+                        borderColor: '#ed8936', borderDash: [5, 5], tension: 0.4
+                    }, {
+                        label: 'Historical', data: hD, borderColor: '#4299e1', tension: 0.4
+                    }]
+                },
+                 options: this.getChartOptions()
+            });
+        },
+        
+        reinitializeAllCharts() {
+            this.initPredictionChart();
+            if (this.state.currentPage === 'history') this.initHistoricalChart();
+            if (this.state.currentPage === 'insights') {
+                this.initTopCropsChart();
+                this.initSupplyDemandChart();
+                this.initForecastChart();
+            }
+        }
+    };
+
+    // --- Start the Application ---
+    AgroMindApp.init();
+
+</script>
+
+</body>
+</html>

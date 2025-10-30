@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroMind – Intelligent Farming for a Smarter Future</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F8F7F4;
+            color: #1a202c;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 400px;
+            max-height: 50vh;
+        }
+
+        .flow-step::after {
+            content: '→';
+            color: #4CAF50;
+            font-size: 2rem;
+            font-weight: bold;
+            position: absolute;
+            right: -2.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .flow-step:last-child::after {
+            content: '';
+        }
+
+        @media (max-width: 1024px) {
+            .flow-step {
+                margin-bottom: 2.5rem;
+            }
+
+            .flow-step::after {
+                content: '↓';
+                right: 50%;
+                top: auto;
+                bottom: -2.5rem;
+                transform: translateX(50%);
+            }
+        }
+
+        /* Mobile menu styling */
+        .mobile-menu-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 60;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+        }
+
+        .mobile-menu-container.open {
+            display: flex;
+        }
+
+        .mobile-menu-container a {
+            font-size: 1.5rem;
+            color: white;
+            padding: 1rem;
+            transition: color 0.2s;
+        }
+
+        .mobile-menu-container a:hover {
+            color: #FACC15;
+        }
+
+        .active-nav {
+            color: #FACC15;
+            font-weight: bold;
+        }
+
+        .feature-card.selected {
+            border-color: #4CAF50;
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+                0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+
+        .bg-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Hero Section Styling */
+        #hero {
+            background: url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6') no-repeat center/cover;
+            position: relative;
+            height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            padding: 0 1.5rem;
+        }
+
+        #hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        #hero .container-content {
+            position: relative;
+            z-index: 2;
+            padding: 2rem;
+            border-radius: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* "Our Solution" section */
+        .info-content {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .info-content.fade-in {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <header class="bg-green-700 text-white sticky top-0 left-0 w-full shadow-md z-50">
+        <div class="container mx-auto flex justify-between items-center p-3 sm:p-4">
+            <h1 class="text-xl sm:text-2xl font-bold">🌱 AgroMind</h1>
+            <nav class="hidden md:flex space-x-4 sm:space-x-6" id="nav-links">
+                <a href="#hero" class="hover:text-yellow-300 transition-colors">Home</a>
+                <a href="#challenge" class="hover:text-yellow-300 transition-colors">The Challenge</a>
+                <a href="#solution" class="hover:text-yellow-300 transition-colors">Our Solution</a>
+                <a href="#process" class="hover:text-yellow-300 transition-colors">How It Works</a>
+                <a href="#impact" class="hover:text-yellow-300 transition-colors">Impact</a>
+            </nav>
+            <a href="login.html"
+                class="bg-yellow-400 text-black px-3 py-1.5 rounded-lg font-semibold hover:bg-yellow-500 transition hidden md:block">Login</a>
+
+            <button id="mobile-menu-btn" class="text-white text-xl md:hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <div id="mobile-menu" class="mobile-menu-container">
+        <button id="close-menu-btn" class="absolute top-4 right-4 text-white text-3xl">&times;</button>
+        <nav class="flex flex-col items-center space-y-6">
+            <a href="#challenge" class="mobile-nav-link" data-section="challenge">The Challenge</a>
+            <a href="#solution" class="mobile-nav-link" data-section="solution">Our Solution</a>
+            <a href="#process" class="mobile-nav-link" data-section="process">How It Works</a>
+            <a href="#impact" class="mobile-nav-link" data-section="impact">Impact</a>
+            <a href="login.html"
+                class="bg-yellow-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-yellow-500 transition">Login</a>
+        </nav>
+    </div>
+
+    <main>
+        <section id="hero">
+            <div class="container-content">
+                <h2 class="text-4xl md:text-5xl font-bold mb-4">Smart Farming. Smarter Future.</h2>
+                <p class="text-lg md:text-xl mb-6">Real-time crop insights, irrigation schedules, and price predictions
+                    for farmers.</p>
+                <a href="signup.html"
+                    class="bg-yellow-400 text-black px-6 py-3 rounded-lg text-lg font-semibold hover:bg-yellow-500 transition inline-block">
+                    Get Started
+                </a>
+            </div>
+        </section>
+
+        <section id="challenge" class="py-16 md:py-24 bg-green-50">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">The Challenge We're Solving</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto mb-12">Modern agriculture faces critical inefficiencies...</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                        <div class="text-5xl mb-4">🌾</div>
+                        <h3 class="text-lg font-semibold">Wrong Crop Selection</h3>
+                        <p class="text-gray-500 text-sm">Mismatching crops with soil and climate leads to poor yields.
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                        <div class="text-5xl mb-4">💧</div>
+                        <h3 class="text-lg font-semibold">Resource Wastage</h3>
+                        <p class="text-gray-500 text-sm">Overuse of water and fertilizers harms the environment and cuts
+                            profits.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                        <div class="text-5xl mb-4">📦</div>
+                        <h3 class="text-lg font-semibold">Post-Harvest Losses</h3>
+                        <p class="text-gray-500 text-sm">Improper storage and monitoring lead to significant spoilage.
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                        <div class="text-5xl mb-4">📉</div>
+                        <h3 class="text-lg font-semibold">Market Volatility</h3>
+                        <p class="text-gray-500 text-sm">Price fluctuations make it difficult for farmers to sell at the
+                            right time.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300">
+                        <div class="text-5xl mb-4">🧑‍🌾</div>
+                        <h3 class="text-lg font-semibold">Lack of Guidance</h3>
+                        <p class="text-gray-500 text-sm">Access to timely, expert advice in local languages is limited.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="solution" class="py-16 md:py-24 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <h2 class="text-3xl md:text-4xl font-bold text-center mb-4">Our Solution: An Integrated Platform</h2>
+                <p class="text-gray-600 max-w-3xl mx-auto text-center mb-12">AgroMind provides a suite of powerful
+                    tools...</p>
+                <div class="flex flex-col md:flex-row md:items-start gap-8">
+                    <div class="md:w-1/2 grid grid-cols-1 md:grid-cols-2 gap-6" id="feature-grid"></div>
+                    <div class="md:w-1/2 bg-white p-8 rounded-lg shadow-lg relative flex items-start justify-center"
+                        id="feature-details"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="process" class="py-16 md:py-24">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">How It Works: A Simple, Powerful Flow</h2>
+                <p class="text-gray-600 max-w-3xl mx-auto mb-16">Our system transforms raw farm data...</p>
+                <div class="flex flex-col lg:flex-row justify-center items-center gap-x-20 gap-y-10">
+                    <div
+                        class="flow-step relative bg-white p-6 rounded-lg shadow-md w-64 opacity-0 transition-opacity duration-700">
+                        <div class="text-4xl mb-3">📡</div>
+                        <h3 class="text-lg font-semibold">1. Data Collection</h3>
+                        <p class="text-sm text-gray-500">Live data from soil sensors, IoT devices...</p>
+                    </div>
+                    <div
+                        class="flow-step relative bg-white p-6 rounded-lg shadow-md w-64 opacity-0 transition-opacity duration-700 delay-300">
+                        <div class="text-4xl mb-3">🧠</div>
+                        <h3 class="text-lg font-semibold">2. AI Predictions</h3>
+                        <p class="text-sm text-gray-500">AI analyzes data to forecast yield, price...</p>
+                    </div>
+                    <div
+                        class="flow-step relative bg-white p-6 rounded-lg shadow-md w-64 opacity-0 transition-opacity duration-700 delay-500">
+                        <div class="text-4xl mb-3">💬</div>
+                        <h3 class="text-lg font-semibold">3. Farmer Interface</h3>
+                        <p class="text-sm text-gray-500">Insights via Dashboard & Chatbot.</p>
+                    </div>
+                    <div
+                        class="flow-step relative bg-white p-6 rounded-lg shadow-md w-64 opacity-0 transition-opacity duration-700 delay-700">
+                        <div class="text-4xl mb-3">✅</div>
+                        <h3 class="text-lg font-semibold">4. Decision Support</h3>
+                        <p class="text-sm text-gray-500">Farmers make informed decisions...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="impact" class="py-16 md:py-24 bg-gray-50">
+            <div class="container mx-auto px-6 text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Visualizing the Impact</h2>
+                <p class="text-gray-600 max-w-3xl mx-auto mb-8">AgroMind delivers tangible results...</p>
+                <div class="flex justify-center space-x-2 sm:space-x-4 mb-8 flex-wrap">
+                    <button data-impact="yield"
+                        class="impact-btn bg-green-600 text-white px-4 py-2 rounded-md shadow-sm hover:bg-green-700 transition-colors my-1">
+                        ✔ Crop Yield
+                    </button>
+                    <button data-impact="efficiency"
+                        class="impact-btn bg-white text-gray-700 px-4 py-2 rounded-md shadow-sm hover:bg-gray-100 transition-colors my-1">
+                        💧 Resource Efficiency
+                    </button>
+                    <button data-impact="profit"
+                        class="impact-btn bg-white text-gray-700 px-4 py-2 rounded-md shadow-sm hover:bg-gray-100 transition-colors my-1">
+                        💰 Profitability
+                    </button>
+                    <button data-impact="loss"
+                        class="impact-btn bg-white text-gray-700 px-4 py-2 rounded-md shadow-sm hover:bg-gray-100 transition-colors my-1">
+                        📦 Loss Reduction
+                    </button>
+                </div>
+                <div class="chart-container">
+                    <canvas id="impactChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-green-700 text-white text-center py-4">
+        <div class="container mx-auto px-6 text-center">
+            <p>© 2025 AgroMind – Intelligent Farming for a Smarter Future</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Features
+            const featuresData = [
+                { id: 'crop', icon: '🌱', title: 'Crop Advisory', short: 'Soil & climate-based recommendations.', long: 'Our AI analyzes soil, climate & data to recommend profitable crops.' },
+                { id: 'irrigation', icon: '💧', title: 'Smart Irrigation', short: 'Efficient water & fertilizer guidance.', long: 'Get precise guidance on water & fertilizer usage via IoT sensors.' },
+                { id: 'chatbot', icon: '🤖', title: 'AgriChatbot', short: '24/7 farmer support.', long: 'Instant answers to farming questions in local languages.' },
+                { id: 'monitoring', icon: '📶', title: 'Harvest & Storage Monitoring', short: 'IoT sensors for real-time data.', long: 'Monitor storage conditions & prevent spoilage with alerts.' },
+                { id: 'prediction', icon: '📈', title: 'Price & Shelf-life Prediction', short: 'Accurate market insights.', long: 'Predict market prices & shelf-life for better selling decisions.' },
+                { id: 'dashboard', icon: '📱', title: 'Smart Dashboard', short: 'Mobile & web app access.', long: 'Access all farm data in one dashboard on web & mobile.' }
+            ];
+
+            const featureGrid = document.getElementById('feature-grid');
+            const featureDetails = document.getElementById('feature-details');
+
+            featuresData.forEach((feature, index) => {
+                const card = document.createElement('div');
+                card.className = 'feature-card bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer border-2 border-transparent';
+                if (index === 0) card.classList.add('selected'); // mark first
+                card.dataset.id = feature.id;
+                card.innerHTML = `<div class="text-4xl mb-3">${feature.icon}</div>
+                                 <h3 class="text-lg font-semibold">${feature.title}</h3>
+                                 <p class="text-gray-500 text-sm">${feature.short}</p>`;
+                featureGrid.appendChild(card);
+            });
+
+            const updateFeatureDetails = (featureId) => {
+                const feature = featuresData.find(f => f.id === featureId);
+                if (!feature) return;
+                featureDetails.innerHTML = `<div class="info-content fade-in">
+                                             <h3 class="text-2xl font-bold mb-3">${feature.icon} ${feature.title}</h3>
+                                             <p class="text-gray-600 leading-relaxed">${feature.long}</p>
+                                           </div>`;
+            };
+
+            updateFeatureDetails('crop');
+
+            document.querySelectorAll('.feature-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.feature-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    updateFeatureDetails(card.dataset.id);
+                });
+            });
+
+            // Flow animation
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) entry.target.classList.add('opacity-100');
+                });
+            }, { threshold: 0.2 });
+
+            document.querySelectorAll('.flow-step').forEach(step => observer.observe(step));
+
+            // Chart.js with gradient colors
+            const ctx = document.getElementById('impactChart').getContext('2d');
+            let impactChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Baseline', 'With AgroMind'],
+                    datasets: [{
+                        label: 'Yield (tons/acre)',
+                        data: [2.5, 4.2],
+                        backgroundColor: function (context) {
+                            const chart = context.chart;
+                            const { ctx, chartArea } = chart;
+                            if (!chartArea) return;
+
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            if (context.dataIndex === 0) {
+                                gradient.addColorStop(0, '#99f6e4'); // light teal
+                                gradient.addColorStop(1, '#0d9488'); // dark teal
+                            } else if (context.dataIndex === 1) {
+                                gradient.addColorStop(0, '#a7f3d0'); // light green
+                                gradient.addColorStop(1, '#22c55e'); // dark green
+                            }
+                            return gradient;
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            const impactData = {
+                yield: { label: 'Yield (tons/acre)', values: [2.5, 4.2], startColor: '#22c55e', endColor: '#a7f3d0', baselineColor: '#0d9488', baselineEndColor: '#99f6e4' },
+                efficiency: { label: 'Water Usage (liters/acre)', values: [1200, 800], startColor: '#3b82f6', endColor: '#bfdbfe', baselineColor: '#1d4ed8', baselineEndColor: '#93c5fd' },
+                profit: { label: 'Profit ($/acre)', values: [500, 950], startColor: '#f59e0b', endColor: '#fde68a', baselineColor: '#d97706', baselineEndColor: '#fcd34d' },
+                loss: { label: 'Post-harvest Loss (%)', values: [25, 10], startColor: '#ef4444', endColor: '#fca5a5', baselineColor: '#b91c1c', baselineEndColor: '#f87171' }
+            };
+
+            document.querySelectorAll('.impact-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.impact-btn').forEach(b => {
+                        b.classList.remove('bg-green-600', 'text-white');
+                        b.classList.add('bg-white', 'text-gray-700');
+                    });
+                    btn.classList.add('bg-green-600', 'text-white');
+                    btn.classList.remove('bg-white', 'text-gray-700');
+
+                    const type = btn.dataset.impact;
+                    const { label, values, startColor, endColor, baselineColor, baselineEndColor } = impactData[type];
+
+                    const newGradient = function (context) {
+                        const chart = context.chart;
+                        const { ctx, chartArea } = chart;
+                        if (!chartArea) return;
+
+                        const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                        if (context.dataIndex === 0) {
+                            gradient.addColorStop(0, baselineColor);
+                            gradient.addColorStop(1, baselineEndColor);
+                        } else if (context.dataIndex === 1) {
+                            gradient.addColorStop(0, startColor);
+                            gradient.addColorStop(1, endColor);
+                        }
+                        return gradient;
+                    };
+
+                    impactChart.data.datasets[0].label = label;
+                    impactChart.data.datasets[0].data = values;
+                    impactChart.data.datasets[0].backgroundColor = newGradient;
+                    impactChart.update();
+                });
+            });
+
+            // Mobile menu
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const closeMenuBtn = document.getElementById('close-menu-btn');
+
+            mobileMenuBtn.addEventListener('click', () => mobileMenu.classList.add('open'));
+            closeMenuBtn.addEventListener('click', () => mobileMenu.classList.remove('open'));
+            document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                link.addEventListener('click', () => mobileMenu.classList.remove('open'));
+            });
+
+            // Active nav highlighting
+            const sections = document.querySelectorAll('main section');
+            const navLinks = document.querySelectorAll('#nav-links a');
+
+            const highlightNav = () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop - 120;
+                    if (scrollY >= sectionTop) current = section.getAttribute('id');
+                });
+                navLinks.forEach(link => {
+                    link.classList.remove('active-nav');
+                    if (link.getAttribute('href').includes(current)) link.classList.add('active-nav');
+                });
+            };
+
+            window.addEventListener('scroll', highlightNav);
+        });
+    </script>
+</body>
+
+</html>

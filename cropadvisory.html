@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Crop Advisory Dashboard - AgroMind</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'wheat-50': '#fffbeb',
+                        'wheat-100': '#fef3c7',
+                        'wheat-200': '#fde68a',
+                        'wheat-300': '#fcd34d',
+                        'wheat-400': '#fbbf24',
+                        'wheat-500': '#f59e0b',
+                        'wheat-600': '#d97706',
+                        'wheat-700': '#b45309',
+                        'wheat-800': '#92400e',
+                        'wheat-900': '#78350f',
+
+                        'onion-50': '#faf5ff',
+                        'onion-100': '#e9d5ff',
+                        'onion-200': '#d8b4fe',
+                        'onion-300': '#c084fc',
+                        'onion-400': '#a855f7',
+                        'onion-500': '#9333ea',
+                        'onion-600': '#7e22ce',
+                        'onion-700': '#6b21a8',
+                        'onion-800': '#581c87',
+                        'onion-900': '#4a1d76',
+
+                        'maize-50': '#fffbeb',
+                        'maize-100': '#fef3c7',
+                        'maize-200': '#fde68a',
+                        'maize-300': '#fcd34d',
+                        'maize-400': '#fbbf24',
+                        'maize-500': '#f59e0b',
+                        'maize-600': '#d97706',
+                        'maize-700': '#b45309',
+                        'maize-800': '#92400e',
+                        'maize-900': '#78350f',
+                        // Default Green for general alerts/branding
+                        'agri-green-50': '#f0fdf4',
+                        'agri-green-100': '#d9f7db',
+                        'agri-green-200': '#bbf7c0',
+                        'agri-green-300': '#9af2a0',
+                        'agri-green-400': '#7cf280',
+                        'agri-green-500': '#5ae65f',
+                        'agri-green-600': '#3ad93f',
+                        'agri-green-700': '#1ad91f',
+                        'agri-green-800': '#00b305',
+                        'agri-green-900': '#008003',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- PDF Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light background for the page */
+        }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* Card hover effects */
+        .phase-card, .sensor-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .phase-card:hover, .sensor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Timeline item connector */
+        .timeline-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            left: 1.25rem; /* Aligns with the center of the icon */
+            top: 2.5rem;  /* Starts below the icon */
+            height: calc(100% - 1.5rem); /* Extends to near the bottom of the item */
+            width: 2px;
+            background-color: #cbd5e1; /* Tailwind's slate-300 */
+            z-index: -1;
+        }
+
+        /* Accordion content transitions */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+
+        /* Alert card transitions */
+        .alert-card {
+            transition: background-color 0.5s ease, border-color 0.5s ease;
+        }
+
+        /* Print specific styles for html2pdf and fallback */
+        @media print {
+            body { font-family: 'Inter', sans-serif; background-color: #fff; }
+            aside, /* Sidebar */
+            .action-buttons { /* Download/New Plan buttons container */
+                display: none !important;
+            }
+            main { width: 100%; padding: 0; margin: 0; box-shadow: none; }
+            .printable-area {
+                box-shadow: none !important;
+                border: 1px solid #e2e8f0 !important; /* Tailwind's gray-200 */
+            }
+            /* Ensure grid columns stack on print */
+            .grid, #mainContainer .grid {
+                grid-template-columns: 1fr !important;
+            }
+            #phaseContainer, #timelineContainer, #chartsContainer, #sensor-section, #alerts-section {
+                page-break-inside: avoid; /* Prevent elements from breaking across pages */
+            }
+            .accordion-content {
+                max-height: none !important; /* Force open for print */
+                overflow: visible !important;
+            }
+            .timeline-item:not(:last-child)::after {
+                background-color: #cbd5e1 !important; /* Ensure connector is visible */
+            }
+            .phase-card:hover, .sensor-card:hover { /* Disable hover effects for print */
+                transform: none;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+    <aside id="sidebar" class="w-64 bg-white shadow-lg p-6 hidden md:flex flex-col flex-shrink-0">
+        <div class="flex items-center mb-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-agri-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            <h1 class="text-2xl font-bold ml-2 text-gray-800">AgroMind</h1>
+        </div>
+        <nav class="space-y-2">
+            <a href="#" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100"><span data-lucide="layout-dashboard"></span><span class="ml-3">Dashboard</span></a>
+            <a href="#" class="flex items-center px-4 py-2 text-white bg-agri-green-600 rounded-lg shadow"><span data-lucide="leaf"></span><span class="ml-3">Crop Advisory</span></a>
+            <a href="#" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100"><span data-lucide="cloud-sun"></span><span class="ml-3">Weather</span></a>
+            <a href="#" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100"><span data-lucide="shopping-cart"></span><span class="ml-3">Market Prices</span></a>
+            <a href="#" class="flex items-center px-4 py-2 text-gray-700 rounded-lg hover:bg-gray-100"><span data-lucide="settings"></span><span class="ml-3">Settings</span></a>
+        </nav>
+        <div class="mt-auto p-4 bg-agri-green-50 border border-agri-green-200 rounded-lg text-center">
+            <h3 class="font-semibold text-agri-green-800">Need Help?</h3>
+            <p class="text-sm text-agri-green-700 mt-1">Contact our agri-experts.</p>
+            <button class="mt-3 w-full bg-agri-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-agri-green-700 contact-us-btn">Contact Us</button>
+        </div>
+    </aside>
+
+    <main id="mainContent" class="flex-1 overflow-y-auto p-6 md:p-10">
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">Crop Advisory Module</h1>
+            <p class="text-gray-600 mt-2">Personalized, real-time farm management powered by AI.</p>
+        </header>
+
+        <div id="mainContainer">
+            <section id="cropInputForm" class="bg-white p-8 rounded-2xl shadow-md transition-opacity duration-500 ease-in-out">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6 border-b pb-4">1. Start a New Crop Cycle</h2>
+                <form id="advisoryForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div>
+                        <label for="cropName" class="block text-sm font-medium text-gray-700 mb-1">Crop Name</label>
+                        <select id="cropName" name="cropName" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agri-green-500 focus:border-agri-green-500">
+                            <option value="">Select a Crop</option>
+                            <option value="Wheat">Wheat</option>
+                            <option value="Onion">Onion</option>
+                            <option value="Maize">Maize</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="soilType" class="block text-sm font-medium text-gray-700 mb-1">Soil Type</label>
+                        <select id="soilType" name="soilType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agri-green-500 focus:border-agri-green-500">
+                            <option>Sandy Loam</option>
+                            <option>Clay</option>
+                            <option>Silty</option>
+                            <option>Alluvial</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="soilPh" class="block text-sm font-medium text-gray-700 mb-1">Soil pH: <span id="soilPhValue" class="font-bold text-agri-green-600">6.5</span></label>
+                        <input type="range" id="soilPh" name="soilPh" min="4" max="9" step="0.1" value="6.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-agri-green-500">
+                    </div>
+                    <div>
+                        <label for="climate" class="block text-sm font-medium text-gray-700 mb-1">Climate</label>
+                        <select id="climate" name="climate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agri-green-500 focus:border-agri-green-500">
+                            <option>Temperate</option>
+                            <option>Tropical</option>
+                            <option>Arid</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location / State</label>
+                        <input type="text" id="location" name="location" placeholder="e.g., Punjab" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agri-green-500 focus:border-agri-green-500" value="Punjab">
+                    </div>
+                    <div class="md:col-span-2 lg:col-span-3 flex justify-end mt-4">
+                        <button type="submit" class="flex items-center justify-center bg-agri-green-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-agri-green-700 transition duration-300">
+                            <span data-lucide="sparkles" class="mr-2 h-5 w-5"></span>Generate Advisory
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section id="advisoryDashboard" class="hidden transition-opacity duration-500 ease-in-out">
+                <div class="flex flex-wrap justify-between items-center mb-6 bg-white p-8 rounded-2xl shadow-md printable-area">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">Live Plan: <span id="dashboardCropName" class="text-agri-green-600"></span></h2>
+                        <p class="text-gray-500 mt-1">Context: <span id="dashboardInputs" class="font-medium"></span></p>
+                    </div>
+                    <div class="action-buttons flex items-center gap-2 mt-4 sm:mt-0">
+                        <button id="downloadButton" class="flex items-center bg-blue-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-600 transition">
+                            <span data-lucide="download" class="mr-2 h-4 w-4"></span>Download Report
+                        </button>
+                        <button id="resetButton" class="flex items-center bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 transition">
+                            <span data-lucide="edit" class="mr-2 h-4 w-4"></span>New Plan
+                        </button>
+                    </div>
+                </div>
+
+                <section id="sensor-section" class="mb-8">
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Real-Time Field Status</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div id="moistureCard" class="sensor-card bg-white p-6 rounded-2xl shadow-md border-l-4 border-agri-green-300">
+                            <div class="flex items-center justify-between"><h4 class="font-semibold text-gray-600">Soil Moisture</h4><span data-lucide="droplets" class="text-blue-500 h-6 w-6"></span></div>
+                            <p class="text-4xl font-bold text-gray-800 mt-2"><span id="moistureValue">--</span>%</p>
+                            <p id="moistureStatus" class="text-sm text-gray-500 mt-1">Awaiting data...</p>
+                        </div>
+                        <div id="temperatureCard" class="sensor-card bg-white p-6 rounded-2xl shadow-md border-l-4 border-orange-300">
+                            <div class="flex items-center justify-between"><h4 class="font-semibold text-gray-600">Temperature</h4><span data-lucide="thermometer" class="text-orange-500 h-6 w-6"></span></div>
+                            <p class="text-4xl font-bold text-gray-800 mt-2"><span id="temperatureValue">--</span>°C</p>
+                            <p id="temperatureStatus" class="text-sm text-gray-500 mt-1">Awaiting data...</p>
+                        </div>
+                        <div id="humidityCard" class="sensor-card bg-white p-6 rounded-2xl shadow-md border-l-4 border-teal-300">
+                            <div class="flex items-center justify-between"><h4 class="font-semibold text-gray-600">Air Humidity</h4><span data-lucide="wind" class="text-teal-500 h-6 w-6"></span></div>
+                            <p class="text-4xl font-bold text-gray-800 mt-2"><span id="humidityValue">--</span>%</p>
+                            <p id="humidityStatus" class="text-sm text-gray-500 mt-1">Awaiting data...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="alerts-section" class="mb-8 printable-area">
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Smart Advisory & Alerts</h3>
+                    <div class="space-y-4">
+                        <div id="irrigationAlert" class="alert-card p-4 rounded-lg flex items-start gap-4 bg-agri-green-50 border-l-4 border-agri-green-500"><span data-lucide="info" class="alert-icon h-6 w-6 text-agri-green-600 flex-shrink-0 mt-1"></span><div><h5 class="font-semibold text-gray-800">Irrigation</h5><p class="text-gray-600 text-sm">Initializing...</p></div></div>
+                        <div id="fertilizerAlert" class="alert-card p-4 rounded-lg flex items-start gap-4 bg-agri-green-50 border-l-4 border-agri-green-500"><span data-lucide="info" class="alert-icon h-6 w-6 text-agri-green-600 flex-shrink-0 mt-1"></span><div><h5 class="font-semibold text-gray-800">Fertilizer</h5><p class="text-gray-600 text-sm">Initializing...</p></div></div>
+                        <div id="diseaseAlert" class="alert-card p-4 rounded-lg flex items-start gap-4 bg-agri-green-50 border-l-4 border-agri-green-500"><span data-lucide="info" class="alert-icon h-6 w-6 text-agri-green-600 flex-shrink-0 mt-1"></span><div><h5 class="font-semibold text-gray-800">Disease Prediction</h5><p class="text-gray-600 text-sm">Initializing...</p></div></div>
+                    </div>
+                </section>
+
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <div id="chartsContainer" class="lg:col-span-1 space-y-8">
+                        <div class="bg-white p-6 rounded-2xl shadow-md printable-area">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-4">Sensor Trends (Live)</h3>
+                            <div class="relative h-64 md:h-80 lg:h-96"> <canvas id="liveSensorChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl shadow-md printable-area">
+                            <h3 class="text-xl font-semibold text-gray-700 mb-4">Crop Lifecycle</h3>
+                            <div id="timelineContainer" class="relative"></div>
+                        </div>
+                    </div>
+
+                    <div id="phaseContainer" class="lg:col-span-3 space-y-6"></div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // --- CONFIGURATION ---
+        const CROP_DATA = {
+            Wheat: {
+                icon: 'grain',
+                color: 'wheat', // Corresponds to Tailwind color prefix
+                disease_risk: { humidity: 80, temp_min: 15, temp_max: 25, name: "Yellow Rust" },
+                ideal_ph: [6.0, 7.0],
+                tolerance_ph: [5.5, 7.5],
+                phases: [
+                    { name: 'Cultivation', icon: 'spade', duration: 'Nov - Dec', details: 'Sow between November and December. Proper seed treatment is crucial.', weekly_plan: [ { week: '1-2', task: 'Final land preparation and leveling.', water: 'Ensure pre-sowing irrigation for adequate moisture.', fertilizer: 'Apply basal dose of Phosphorus (P) and Potassium (K).' }, { week: '3-4', task: 'Sowing of certified seeds at recommended depth.', water: 'Light watering as needed.', fertilizer: 'N/A' } ]},
+                    { name: 'Growth & Irrigation', icon: 'droplets', duration: 'Dec - Feb', details: 'Focus on timely irrigation and nutrient management for healthy growth.', weekly_plan: [ { week: '5-6', task: 'Crown Root Initiation (CRI) stage.', water: 'CRITICAL: Apply first light irrigation (21-25 days after sowing).', fertilizer: 'First top dressing of Nitrogen (Urea) after irrigation.' }, { week: '7-8', task: 'Tillering stage. Monitor plant health.', water: 'Apply second irrigation.', fertilizer: 'N/A' }, { week: '9-10', task: 'Jointing stage. Weed management.', water: 'Apply third irrigation.', fertilizer: 'Second top dressing of Nitrogen.' } ]},
+                    { name: 'Pest & Disease Mgmt.', icon: 'bug', duration: 'Jan - Mar', details: 'Regularly monitor for pests and diseases, especially Yellow Rust and Aphids.', weekly_plan: [ { week: '11-12', task: 'Flowering stage. Scout for aphid colonies.', water: 'Apply fourth irrigation.', fertilizer: 'N/A' }, { week: '13-14', task: 'Dough stage. Monitor for rust.', water: 'Apply final irrigation if needed.', fertilizer: 'N/A' } ]},
+                    { name: 'Harvesting & Storage', icon: 'tractor', duration: 'Mar - Apr', details: 'Harvest at the right maturity to minimize losses.', weekly_plan: [ { week: '15-16', task: 'Stop irrigation and allow the crop to mature.', water: 'N/A', fertilizer: 'N/A' }, { week: '17-18', task: 'Harvest when grains are hard (around 20% moisture).', water: 'N/A', fertilizer: 'N/A' }, { week: '19-20', task: 'Threshing and storage.', water: 'N/A', fertilizer: 'N/A' } ]} ]
+            },
+            Onion: {
+                icon: 'carrot',
+                color: 'onion',
+                disease_risk: { humidity: 85, temp_min: 20, temp_max: 28, name: "Purple Blotch" },
+                ideal_ph: [6.0, 6.8],
+                tolerance_ph: [5.5, 7.0],
+                phases: [
+                    { name: 'Nursery & Cultivation', icon: 'spade', duration: 'Oct - Nov', details: 'Start with a healthy nursery. Transplant seedlings after 40-45 days.', weekly_plan: [ { week: '1-6', task: 'Nursery raising on raised beds.', water: 'Light watering to keep beds moist.', fertilizer: 'Apply FYM to nursery beds.'}, { week: '7-8', task: 'Transplant seedlings to the main field.', water: 'Immediate light irrigation after transplanting.', fertilizer: 'Apply basal NPK dose before transplanting.'} ]},
+                    { name: 'Growth & Irrigation', icon: 'droplets', duration: 'Nov - Jan', details: 'Consistent moisture is key for bulb development.', weekly_plan: [ { week: '9-10', task: 'Weed management and monitoring.', water: 'Irrigate every 8-10 days.', fertilizer: 'First top dressing of Nitrogen (30 days after transplant).'}, { week: '11-12', task: 'Bulb initiation stage.', water: 'Maintain consistent soil moisture.', fertilizer: 'Second top dressing of Nitrogen (45 days after transplant).'} ]},
+                    { name: 'Pest & Disease Mgmt.', icon: 'bug', duration: 'Dec - Feb', details: 'Watch for Thrips and Purple Blotch disease.', weekly_plan: [ { week: '13-14', task: 'Set up blue sticky traps for Thrips.', water: 'Continue irrigation schedule.', fertilizer: 'Consider Sulphur application for bulb quality.'}, { week: '15-16', task: 'Monitor for fungal diseases like Purple Blotch.', water: 'Reduce irrigation frequency as bulbs mature.', fertilizer: 'N/A'} ]},
+                    { name: 'Harvesting & Curing', icon: 'tractor', duration: 'Feb - Mar', details: 'Proper curing is essential for long storage life.', weekly_plan: [ { week: '17-18', task: 'Stop irrigation 15-20 days before harvest.', water: 'N/A', fertilizer: 'N/A'}, { week: '19-20', task: 'Harvest when 75% of tops have fallen over.', water: 'N/A', fertilizer: 'N/A'}, { week: '21-22', task: 'Cure bulbs in a shaded, ventilated area for 10-15 days.', water: 'N/A', fertilizer: 'N/A'} ]} ]
+            },
+            Maize: {
+                icon: 'wind', // Using wind for maize, could use something else if available
+                color: 'maize',
+                disease_risk: { humidity: 80, temp_min: 25, temp_max: 32, name: "Fall Armyworm activity" },
+                ideal_ph: [6.0, 7.0],
+                tolerance_ph: [5.5, 8.0],
+                phases: [
+                    { name: 'Sowing & Germination', icon: 'spade', duration: 'Jun - Jul', details: 'Sow with the onset of monsoon for the Kharif season.', weekly_plan: [ { week: '1-2', task: 'Deep ploughing and field preparation.', water: 'Depends on monsoon onset.', fertilizer: 'Apply basal dose of P, K, and 1/3 of N.'}, { week: '3-4', task: 'Sow seeds and manage weeds.', water: 'Ensure proper drainage to avoid waterlogging.', fertilizer: 'N/A'} ]},
+                    { name: 'Growth & Irrigation', icon: 'droplets', duration: 'Jul - Sep', details: 'Water is most critical during tasseling and silking.', weekly_plan: [ { week: '5-6', task: 'Knee-high stage. Inter-cultivation and weeding.', water: 'Apply irrigation if there is a dry spell.', fertilizer: 'First split of Nitrogen top dressing.'}, { week: '7-8', task: 'Tasseling and Silking stage. Most critical period.', water: 'CRITICAL: Ensure adequate moisture. Irrigate if no rain.', fertilizer: 'Second split of Nitrogen top dressing.'} ]},
+                    { name: 'Pest & Disease Mgmt.', icon: 'bug', duration: 'Aug - Sep', details: 'Monitor for Fall Armyworm (FAW) and Stem Borer.', weekly_plan: [ { week: '9-10', task: 'Grain filling stage. Monitor for FAW.', water: 'Maintain moisture for proper grain development.', fertilizer: 'N/A'}, { week: '11-12', task: 'Scout for pests and diseases.', water: 'N/A', fertilizer: 'N/A'} ]},
+                    { name: 'Harvesting & Storage', icon: 'tractor', duration: 'Oct - Nov', details: 'Harvest when husks are dry and grains are hard.', weekly_plan: [ { week: '13-14', task: 'Look for the black layer at the grain base.', water: 'N/A', fertilizer: 'N/A'}, { week: '15-16', task: 'Harvest cobs and dry them immediately.', water: 'N/A', fertilizer: 'N/A'} ]} ]
+            }
+        };
+
+        const PHASE_COLOR_MAP = {
+            wheat: { bg: 'bg-wheat-50', text: 'text-wheat-800', border: 'border-wheat-200', iconBg: 'bg-wheat-100', iconText: 'text-wheat-600' },
+            onion: { bg: 'bg-onion-50', text: 'text-onion-800', border: 'border-onion-200', iconBg: 'bg-onion-100', iconText: 'text-onion-600' },
+            maize: { bg: 'bg-maize-50', text: 'text-maize-800', border: 'border-maize-200', iconBg: 'bg-maize-100', iconText: 'text-maize-600' }
+        };
+
+        const ALERT_STYLES = {
+            red: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-800', icon: 'siren' },
+            yellow: { bg: 'bg-yellow-100', border: 'border-yellow-500', text: 'text-yellow-800', icon: 'alert-triangle' },
+            green: { bg: 'bg-agri-green-100', border: 'border-agri-green-500', text: 'text-agri-green-800', icon: 'check-circle' }
+        };
+
+        // --- DOM ELEMENTS ---
+        const advisoryForm = document.getElementById('advisoryForm');
+        const cropInputFormSection = document.getElementById('cropInputForm');
+        const advisoryDashboardSection = document.getElementById('advisoryDashboard');
+        const resetButton = document.getElementById('resetButton');
+        const downloadButton = document.getElementById('downloadButton');
+        const soilPhSlider = document.getElementById('soilPh');
+        const soilPhValueSpan = document.getElementById('soilPhValue');
+        const phaseContainer = document.getElementById('phaseContainer');
+        const timelineContainer = document.getElementById('timelineContainer');
+        const dashboardCropNameSpan = document.getElementById('dashboardCropName');
+        const dashboardInputsSpan = document.getElementById('dashboardInputs');
+        const moistureCard = document.getElementById('moistureCard');
+        const temperatureCard = document.getElementById('temperatureCard');
+        const humidityCard = document.getElementById('humidityCard');
+        const liveSensorChartCanvas = document.getElementById('liveSensorChart');
+
+        // --- STATE VARIABLES ---
+        let sensorInterval = null;
+        let liveSensorChart = null;
+        let currentCropConfig = {};
+        const MAX_CHART_POINTS = 20;
+
+        // --- UTILITY FUNCTIONS ---
+        function updateElementText(elementId, text) {
+            const el = document.getElementById(elementId);
+            if (el) el.textContent = text;
+        }
+
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        // --- INITIALIZATION ---
+        function initializeApp() {
+            lucide.createIcons();
+            advisoryForm.addEventListener('submit', handleFormSubmit);
+            resetButton.addEventListener('click', handleReset);
+            downloadButton.addEventListener('click', handleDownloadReport);
+            soilPhSlider.addEventListener('input', handlePhSliderInput);
+            soilPhValueSpan.textContent = soilPhSlider.value;
+            cropInputFormSection.classList.remove('hidden', 'opacity-0');
+            advisoryDashboardSection.classList.add('hidden', 'opacity-0');
+        }
+
+        // --- EVENT HANDLERS ---
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const formData = new FormData(advisoryForm);
+            const cropName = formData.get('cropName');
+
+            if (!cropName) {
+                // In a real app, use a modal instead of alert()
+                console.error('Please select a crop to proceed.');
+                // Add a visual indicator
+                const cropSelect = document.getElementById('cropName');
+                cropSelect.classList.add('border-red-500', 'ring-red-500');
+                setTimeout(() => cropSelect.classList.remove('border-red-500', 'ring-red-500'), 2000);
+                return;
+            }
+
+            currentCropConfig = {
+                name: cropName,
+                soilPh: formData.get('soilPh'),
+                soilType: formData.get('soilType'),
+                climate: formData.get('climate'),
+                location: formData.get('location'),
+                details: CROP_DATA[cropName]
+            };
+
+            setupDashboard(currentCropConfig);
+            startSensorSimulation();
+
+            cropInputFormSection.classList.add('opacity-0');
+            setTimeout(() => {
+                cropInputFormSection.classList.add('hidden');
+                advisoryDashboardSection.classList.remove('hidden');
+                requestAnimationFrame(() => advisoryDashboardSection.classList.remove('opacity-0'));
+            }, 300);
+        }
+
+        function handleReset() {
+            stopSensorSimulation();
+            if (liveSensorChart) {
+                liveSensorChart.destroy();
+                liveSensorChart = null;
+            }
+
+            advisoryDashboardSection.classList.add('opacity-0');
+            setTimeout(() => {
+                advisoryDashboardSection.classList.add('hidden');
+                cropInputFormSection.classList.remove('hidden');
+                requestAnimationFrame(() => cropInputFormSection.classList.remove('opacity-0'));
+            }, 300);
+            
+            advisoryForm.reset();
+            soilPhValueSpan.textContent = '6.5';
+            soilPhSlider.value = '6.5';
+            resetSensorCards();
+        }
+
+        function handleDownloadReport() {
+            const originalButtonText = downloadButton.innerHTML;
+            downloadButton.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Generating...`;
+            downloadButton.disabled = true;
+
+            const element = document.getElementById('advisoryDashboard');
+            const cropName = document.getElementById('dashboardCropName').textContent;
+            const filename = `AgroMind_Advisory_${cropName.replace(/\s+/g, '_')}.pdf`;
+
+            // Temporarily open all accordions for printing
+            const accordions = element.querySelectorAll('.accordion-content');
+            const openedAccordions = [];
+            accordions.forEach(acc => {
+                if(acc.style.maxHeight && acc.style.maxHeight !== '0px') {
+                    openedAccordions.push(acc);
+                } else {
+                    acc.style.maxHeight = acc.scrollHeight + 'px';
+                }
+            });
+
+            const opt = {
+                margin: [0.5, 0.5, 0.5, 0.5], // [top, left, bottom, right] in inches
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            html2pdf().from(element).set(opt).save().then(() => {
+                downloadButton.innerHTML = originalButtonText;
+                downloadButton.disabled = false;
+                // Close accordions back to their original state
+                 accordions.forEach(acc => {
+                    if (!openedAccordions.includes(acc)) {
+                       acc.style.maxHeight = '0px';
+                    }
+                });
+                lucide.createIcons(); // Re-render lucide icons in the button
+            });
+        }
+
+        function handlePhSliderInput(e) {
+            soilPhValueSpan.textContent = e.target.value;
+        }
+
+        function handleAccordionToggle(event) {
+            const button = event.currentTarget;
+            // The button's parent is the `.p-6` div. The content is the next sibling of that div.
+            const content = button.parentElement.nextElementSibling;
+            const icon = button.querySelector('.transition-transform');
+            
+            if (!content) {
+                console.error("Could not find the accordion content element for:", button);
+                return;
+            }
+
+            const isExpanded = content.style.maxHeight && content.style.maxHeight !== '0px';
+
+            if (isExpanded) {
+                // Close it
+                content.style.maxHeight = '0px';
+                if (icon) icon.style.transform = 'rotate(0deg)';
+                button.setAttribute('aria-expanded', 'false');
+            } else {
+                // Open it
+                content.style.maxHeight = content.scrollHeight + "px";
+                if (icon) icon.style.transform = 'rotate(180deg)';
+                button.setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        // --- DASHBOARD SETUP ---
+        function setupDashboard(cropData) {
+            dashboardCropNameSpan.textContent = cropData.name;
+            dashboardInputsSpan.textContent = `${cropData.soilType} Soil, pH ${cropData.soilPh} in ${cropData.location} (${cropData.climate})`;
+
+            const colors = PHASE_COLOR_MAP[cropData.details.color] || PHASE_COLOR_MAP.wheat;
+            phaseContainer.innerHTML = '';
+            timelineContainer.innerHTML = '';
+
+            cropData.details.phases.forEach((phase, index) => {
+                renderTimelineItem(phase, index, colors);
+                renderPhaseCard(phase, index, cropData.soilPh, colors);
+            });
+
+            lucide.createIcons();
+            initializeLiveChart();
+        }
+
+        function renderTimelineItem(phase, index, colors) {
+            const timelineItem = document.createElement('div');
+            timelineItem.className = 'timeline-item relative pl-12 pb-8';
+            timelineItem.innerHTML = `
+                <div class="absolute left-0 top-0 flex items-center justify-center h-10 w-10 rounded-full ${colors.iconBg}">
+                    <span data-lucide="${phase.icon}" class="h-5 w-5 ${colors.iconText}"></span>
+                </div>
+                <div class="font-semibold text-gray-700">${phase.name}</div>
+                <div class="text-sm text-gray-500">${phase.duration}</div>`;
+            timelineContainer.appendChild(timelineItem);
+        }
+
+        function renderPhaseCard(phase, index, currentPh, colors) {
+            const weeklyPlanHtml = phase.weekly_plan.map(week => `
+                <li class="py-3 sm:py-4">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 font-bold text-gray-600 w-10 text-right">W${week.week}</div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900">${week.task}</p>
+                            <div class="mt-2 text-sm text-gray-500 space-y-1">
+                                <p class="flex items-center"><span data-lucide="droplets" class="h-4 w-4 mr-2 text-blue-500"></span>${week.water}</p>
+                                <p class="flex items-center"><span data-lucide="flask-conical" class="h-4 w-4 mr-2 text-green-500"></span>${week.fertilizer}</p>
+                            </div>
+                        </div>
+                    </div>
+                </li>`).join('');
+
+            const phaseCard = document.createElement('div');
+            phaseCard.className = `phase-card bg-white border ${colors.border} rounded-2xl printable-area`;
+            phaseCard.innerHTML = `
+                <div class="p-6">
+                    <div class="flex items-center mb-4">
+                        <div class="flex items-center justify-center h-12 w-12 rounded-full ${colors.iconBg} mr-4">
+                           <span data-lucide="${phase.icon}" class="h-6 w-6 ${colors.iconText}"></span>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-bold ${colors.text}">Phase ${index + 1}: ${phase.name}</h3>
+                            <p class="font-medium text-gray-500">${phase.duration}</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-600 leading-relaxed mb-4">${phase.details}</p>
+                    <button class="accordion-toggle w-full text-left font-semibold text-gray-700 flex justify-between items-center py-2 px-1" aria-expanded="false">
+                        <span>View Weekly Plan</span>
+                        <span data-lucide="chevron-down" class="transition-transform duration-500"></span>
+                    </button>
+                </div>
+                <div class="accordion-content">
+                    <div class="p-6 border-t ${colors.border}">
+                        <ul class="divide-y divide-gray-200">${weeklyPlanHtml}</ul>
+                    </div>
+                </div>`;
+            phaseContainer.appendChild(phaseCard);
+            phaseCard.querySelector('.accordion-toggle').addEventListener('click', handleAccordionToggle);
+        }
+
+        // --- REAL-TIME SIMULATION & ANALYSIS ---
+        function startSensorSimulation() {
+            if (sensorInterval) clearInterval(sensorInterval);
+            updateRealtimeData();
+            sensorInterval = setInterval(updateRealtimeData, 3000);
+        }
+
+        function stopSensorSimulation() {
+            if (sensorInterval) clearInterval(sensorInterval);
+            sensorInterval = null;
+            resetSensorCards();
+        }
+
+        function resetSensorCards() {
+            updateElementText('moistureValue', '--');
+            updateElementText('temperatureValue', '--');
+            updateElementText('humidityValue', '--');
+            updateElementText('moistureStatus', 'Awaiting data...');
+            updateElementText('temperatureStatus', 'Awaiting data...');
+            updateElementText('humidityStatus', 'Awaiting data...');
+            resetAlertsAndCardStyles();
+        }
+
+        function resetAlertsAndCardStyles() {
+            const green = ALERT_STYLES.green;
+            ['irrigationAlert', 'fertilizerAlert', 'diseaseAlert'].forEach(id => {
+                 updateAlertUI(id, 'Initializing...', green);
+            });
+
+            moistureCard.className = `sensor-card bg-white p-6 rounded-2xl shadow-md border-l-4 border-agri-green-300`;
+            temperatureCard.className = `sensor-card bg-white p-6 rounded-2xl shadow-md border-l-4 border-orange-300`;
+            humidityCard.className = `sensor-card bg-white p-6 rounded-2xl shadow-md border-l-4 border-teal-300`;
+            lucide.createIcons();
+        }
+
+        function updateRealtimeData() {
+            const moisture = parseFloat((45 + (Math.random() * 50 - 25)).toFixed(1));
+            const temperature = parseFloat((28 + (Math.random() * 10 - 5)).toFixed(1));
+            const humidity = parseFloat((75 + (Math.random() * 20 - 10)).toFixed(1));
+
+            updateElementText('moistureValue', moisture);
+            updateElementText('temperatureValue', temperature);
+            updateElementText('humidityValue', humidity);
+
+            const sensorReadings = { moisture, temperature, humidity };
+            analyzeAndDisplayAlerts(sensorReadings);
+            addDataToLiveChart(sensorReadings);
+        }
+
+        function analyzeAndDisplayAlerts(sensors) {
+            const { moisture, temperature, humidity } = sensors;
+            const crop = currentCropConfig.details;
+            const { ideal_ph, tolerance_ph, disease_risk } = crop;
+
+            let irriAlert = { msg: "Soil moisture is optimal.", style: ALERT_STYLES.green };
+            if (moisture < 30) irriAlert = { msg: "Critical! Soil is too dry. Irrigate within the next 24 hours.", style: ALERT_STYLES.red };
+            else if (moisture < 45) irriAlert = { msg: "Caution: Soil is getting dry. Plan for irrigation soon.", style: ALERT_STYLES.yellow };
+            updateAlertUI('irrigationAlert', irriAlert.msg, irriAlert.style);
+            updateSensorCardStyle(moistureCard, irriAlert.style.border, 'moistureStatus', irriAlert.msg);
+
+            let fertAlert = { msg: "Nutrient conditions appear stable. Follow the weekly plan.", style: ALERT_STYLES.green };
+            if (currentCropConfig.soilPh < tolerance_ph[0] || currentCropConfig.soilPh > tolerance_ph[1]) {
+                fertAlert = { msg: `Soil pH (${currentCropConfig.soilPh}) is outside tolerance (${tolerance_ph.join(' - ')}). Consider amendments.`, style: ALERT_STYLES.yellow };
+            } else if (temperature > 35) {
+                fertAlert = { msg: "High temperature detected. Reduce Nitrogen usage by 15-20% to avoid stress.", style: ALERT_STYLES.yellow };
+            }
+            updateAlertUI('fertilizerAlert', fertAlert.msg, fertAlert.style);
+            updateSensorCardStyle(temperatureCard, temperature > 35 ? ALERT_STYLES.yellow.border : 'border-orange-300', 'temperatureStatus', `Temp is ${temperature > 35 ? 'high' : 'normal'}`);
+
+            let disAlert = { msg: `Conditions are not favorable for ${disease_risk.name}.`, style: ALERT_STYLES.green };
+            if (humidity >= disease_risk.humidity && temperature >= disease_risk.temp_min && temperature <= disease_risk.temp_max) {
+                disAlert = { msg: `High risk of ${disease_risk.name} due to high humidity (${humidity}%) and favorable temperature (${temperature}°C). Consider preventive fungicides.`, style: ALERT_STYLES.red };
+            } else if (humidity > disease_risk.humidity * 0.85 || (temperature > disease_risk.temp_min && temperature < disease_risk.temp_max)) {
+                disAlert = { msg: `Moderate risk of ${disease_risk.name}. Monitor conditions closely.`, style: ALERT_STYLES.yellow };
+            }
+            updateAlertUI('diseaseAlert', disAlert.msg, disAlert.style);
+            updateSensorCardStyle(humidityCard, disAlert.style.border, 'humidityStatus', `Current risk: ${disAlert.style === ALERT_STYLES.red ? 'High' : disAlert.style === ALERT_STYLES.yellow ? 'Moderate' : 'Low'}`);
+
+            lucide.createIcons();
+        }
+
+        function updateAlertUI(elementId, message, style) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.className = `alert-card p-4 rounded-lg flex items-start gap-4 ${style.bg} border-l-4 ${style.border}`;
+            const iconElement = el.querySelector('.alert-icon');
+            if (iconElement) {
+                iconElement.outerHTML = `<span data-lucide="${style.icon}" class="alert-icon h-6 w-6 ${style.text} flex-shrink-0 mt-1"></span>`;
+            }
+            el.querySelector('p').textContent = message;
+        }
+
+        function updateSensorCardStyle(cardElement, borderClass, statusId, statusText) {
+            if (!cardElement) return;
+            // Retain original border color unless overridden by alert status
+            const originalBorder = cardElement.id === 'moistureCard' ? 'border-agri-green-300' : cardElement.id === 'temperatureCard' ? 'border-orange-300' : 'border-teal-300';
+            cardElement.className = `sensor-card bg-white p-6 rounded-2xl shadow-md border-l-4 ${borderClass || originalBorder}`;
+            updateElementText(statusId, statusText);
+        }
+
+        // --- CHART.JS FUNCTIONS ---
+        function initializeLiveChart() {
+            if (liveSensorChart) liveSensorChart.destroy();
+            const ctx = liveSensorChartCanvas.getContext('2d');
+            liveSensorChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'Moisture (%)', data: [], borderColor: 'rgb(59, 130, 246)', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.3, fill: true, pointRadius: 1, pointHoverRadius: 4 },
+                        { label: 'Temperature (°C)', data: [], borderColor: 'rgb(249, 115, 22)', backgroundColor: 'rgba(249, 115, 22, 0.1)', tension: 0.3, fill: true, pointRadius: 1, pointHoverRadius: 4 },
+                        { label: 'Humidity (%)', data: [], borderColor: 'rgb(16, 185, 129)', backgroundColor: 'rgba(16, 185, 129, 0.1)', tension: 0.3, fill: true, pointRadius: 1, pointHoverRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, animation: { duration: 500, easing: 'linear' },
+                    plugins: { legend: { position: 'top', labels: { font: { size: 12 } } }, tooltip: { mode: 'index', intersect: false, } },
+                    scales: {
+                        x: { title: { display: true, text: 'Time' }, ticks: { maxTicksLimit: 7 } },
+                        y: { title: { display: true, text: 'Value' }, suggestedMin: 0, suggestedMax: 100 }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
+        }
+
+        function addDataToLiveChart(sensorData) {
+            if (!liveSensorChart) return;
+            const timeLabel = formatTime(new Date());
+
+            liveSensorChart.data.labels.push(timeLabel);
+            liveSensorChart.data.datasets[0].data.push(sensorData.moisture);
+            liveSensorChart.data.datasets[1].data.push(sensorData.temperature);
+            liveSensorChart.data.datasets[2].data.push(sensorData.humidity);
+
+            if (liveSensorChart.data.labels.length > MAX_CHART_POINTS) {
+                liveSensorChart.data.labels.shift();
+                liveSensorChart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+
+            liveSensorChart.update();
+        }
+
+        // --- Initial setup ---
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>

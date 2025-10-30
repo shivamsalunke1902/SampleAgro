@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroMind OS_v3.0 // FIELD_ACCESS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --color-primary: #000000;
+            --color-secondary: #00FF00; /* Pure Green Glitch/Terminal */
+            --color-text: #E0E0E0;
+            --color-subtle: #444444;
+        }
+
+        body {
+            font-family: 'Roboto Mono', monospace;
+            background-color: var(--color-primary);
+            color: var(--color-text);
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            color: var(--color-secondary);
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5); /* Subtle terminal glow */
+            letter-spacing: 0.1em;
+        }
+
+        /* Glitch Effect on Text */
+        .glitch-text {
+            animation: glitch-color 1.5s infinite alternate;
+            position: relative;
+        }
+        @keyframes glitch-color {
+            0% { color: var(--color-secondary); text-shadow: 0 0 5px rgba(0, 255, 0, 0.5); }
+            30% { color: var(--color-text); text-shadow: none; }
+            60% { color: var(--color-secondary); text-shadow: 0 0 8px rgba(0, 255, 0, 0.7); }
+            100% { color: var(--color-text); text-shadow: none; }
+        }
+
+        /* Data Block Styling */
+        .data-block {
+            border: 1px solid var(--color-subtle);
+            background-color: rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+        }
+        .data-block:hover {
+            border-color: var(--color-secondary);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+            transform: translateY(-5px);
+        }
+
+        /* Unique Hero Layout */
+        #hero {
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr;
+            padding: 0;
+        }
+        .hero-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 8rem 4rem 4rem 4rem;
+            border-right: 1px solid var(--color-subtle);
+        }
+        .hero-right {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+        }
+
+        /* Data Section Layout */
+        #solution {
+            padding: 8rem 0;
+        }
+        .solution-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+        
+        /* Process Flow - Lines */
+        .process-flow {
+            position: relative;
+        }
+        .process-line {
+            position: absolute;
+            height: 100%;
+            width: 1px;
+            background: var(--color-secondary);
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.3;
+        }
+        .process-dot {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: var(--color-secondary);
+            border-radius: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px var(--color-secondary);
+        }
+        
+    </style>
+</head>
+
+<body class="antialiased">
+
+    <header class="fixed top-0 left-0 w-full z-50 p-4 border-b border-gray-800 bg-black/90 backdrop-blur-sm">
+        <div class="container mx-auto flex justify-between items-center text-sm uppercase">
+            <a href="#" class="text-xl font-bold text-white tracking-widest">
+                <span class="text-sm text-gray-400">//</span> AGROMIND_OS
+            </a>
+            <nav class="hidden md:flex space-x-6 text-gray-500">
+                <a href="#hero" class="hover:text-green-500 transition-colors">INIT</a>
+                <a href="#challenge" class="hover:text-green-500 transition-colors">DECODE</a>
+                <a href="#solution" class="hover:text-green-500 transition-colors">ARCHIVE</a>
+                <a href="#impact" class="hover:text-green-500 transition-colors">METRICS</a>
+                <a href="#" class="text-green-500 hover:text-white transition-colors">ACCESS ></a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero">
+            <div class="hero-left">
+                <p class="text-xs text-green-500 mb-2">// INIT_FARMING_PROTOCOL (v3.0.1)</p>
+                <h1 class="text-5xl md:text-7xl font-bold mb-4 leading-tight">
+                    <span class="glitch-text">DATA</span><br>
+                    GENERATES<br>
+                    <span class="text-white">YIELD</span>.
+                </h1>
+                <p class="text-gray-400 max-w-lg mb-8 text-lg">
+                    AgroMind is a closed-loop intelligence system, utilizing proprietary ML to manage agricultural risk and **guarantee resource efficiency**. Field-level data is now actionable.
+                </p>
+                <a href="#solution" class="uppercase text-sm font-bold tracking-widest border border-green-500 text-green-500 p-3 w-48 text-center hover:bg-green-500 hover:text-black transition-colors">
+                    EXECUTE >
+                </a>
+            </div>
+            
+            <div class="hero-right">
+                <div class="w-full h-96 p-8 data-block border-green-500/50 flex flex-col justify-between">
+                    <p class="text-sm text-green-500">// ACTIVE_FEED: SOIL_MOISTURE</p>
+                    <div class="text-center">
+                        <div class="text-8xl font-bold text-white tracking-tighter mb-4">
+                            47.<span class="text-green-500">3%</span>
+                        </div>
+                        <p class="text-gray-500 text-xs">// FIELD: ALPHAX-7 | OPTIMAL: 45.0%</p>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 border-t border-gray-800 pt-4">
+                        <p>LAT: 34.0522 N</p>
+                        <p>LON: 118.2437 W</p>
+                        <p>T-STAMP: 2025-10-14 18:29:18Z</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="challenge" class="py-24 border-t border-b border-gray-800">
+            <div class="container mx-auto px-8">
+                <h2 class="text-3xl mb-12 text-center">// DECODE_OPERATIONAL_FAILURE</h2>
+                
+                <div class="flex flex-col md:flex-row justify-between gap-10">
+                    <div class="md:w-1/3 data-block p-6" style="transform: skewY(-2deg);" data-aos="fade-right">
+                        <h3 class="text-xl text-green-500 mb-3">01 // RESOURCE LEAK</h3>
+                        <p class="text-gray-400 text-sm">Traditional methods waste up to 40% of water and nutrients. **Manual estimation is inefficient**. AgroMind eliminates this margin of error through hyper-local dosing protocols.</p>
+                    </div>
+                    <div class="md:w-1/3 data-block p-6 bg-green-500/10" data-aos="fade-up">
+                        <h3 class="text-xl text-green-500 mb-3">02 // YIELD UNCERTAINTY</h3>
+                        <p class="text-gray-400 text-sm">Farmers operate without full climate models or market forecasts. We provide **90-day probabilistic modeling** to predict market windows and harvest quality.</p>
+                    </div>
+                    <div class="md:w-1/3 data-block p-6" style="transform: skewY(2deg);" data-aos="fade-left">
+                        <h3 class="text-xl text-green-500 mb-3">03 // ADVISORY LATENCY</h3>
+                        <p class="text-gray-400 text-sm">A pest outbreak needs **immediate intervention**, not a two-day consultation. Our AI diagnoses field photos and issues automated counter-measures instantly.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="solution" class="py-24">
+            <div class="container mx-auto px-8">
+                <h2 class="text-3xl mb-16 text-center">// SYSTEM_ARCHIVE_MODULES</h2>
+                
+                <div class="solution-grid">
+                    <div class="data-block p-8" data-aos="fade-up">
+                        <p class="text-4xl mb-4 text-white">01</p>
+                        <h3 class="text-xl text-green-500 mb-2">SOIL_MAPPER</h3>
+                        <p class="text-gray-500 text-sm">Generates 3D topological suitability maps. **Optimal Seed Matching**.</p>
+                    </div>
+                    <div class="data-block p-8 md:mt-12" data-aos="fade-up" style="transition-delay: 150ms;">
+                        <p class="text-4xl mb-4 text-white">02</p>
+                        <h3 class="text-xl text-green-500 mb-2">HYDRO_ML</h3>
+                        <p class="text-gray-500 text-sm">Forecasts next 72-hour moisture deficit. **Micro-Dosing Protocol**.</p>
+                    </div>
+                    <div class="data-block p-8" data-aos="fade-up" style="transition-delay: 300ms;">
+                        <p class="text-4xl mb-4 text-white">03</p>
+                        <h3 class="text-xl text-green-500 mb-2">AGRI_AGENT</h3>
+                        <p class="text-gray-500 text-sm">Visual anomaly detection via field camera feeds. **Instant Diagnostic**.</p>
+                    </div>
+                    <div class="data-block p-8 md:-mt-12" data-aos="fade-up" style="transition-delay: 450ms;">
+                        <p class="text-4xl mb-4 text-white">04</p>
+                        <h3 class="text-xl text-green-500 mb-2">COLD_AUDIT</h3>
+                        <p class="text-gray-500 text-sm">Monitors storage environment integrity. **Spoilage Pre-empt**.</p>
+                    </div>
+                    <div class="data-block p-8" data-aos="fade-up" style="transition-delay: 600ms;">
+                        <p class="text-4xl mb-4 text-white">05</p>
+                        <h3 class="text-xl text-green-500 mb-2">SELL_POINT_OPT</h3>
+                        <p class="text-gray-500 text-sm">Tracks commodity futures and logistics. **Revenue Maximization**.</p>
+                    </div>
+                    <div class="data-block p-8 md:mt-12" data-aos="fade-up" style="transition-delay: 750ms;">
+                        <p class="text-4xl mb-4 text-white">06</p>
+                        <h3 class="text-xl text-green-500 mb-2">DATA_STACK</h3>
+                        <p class="text-gray-500 text-sm">Consolidated single-pane-of-glass dashboard. **Command Center**.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="impact" class="py-24 border-t border-gray-800">
+            <div class="container mx-auto px-8 text-center">
+                <h2 class="text-3xl mb-16">// IMPACT_VISUALIZER</h2>
+                
+                <div class="w-full max-w-5xl mx-auto p-6 data-block border-green-500/50">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-3">
+                        <p class="text-sm text-green-500">DISPLAY_METRIC:</p>
+                        <div id="impact-buttons" class="flex space-x-3">
+                            </div>
+                    </div>
+                    
+                    <div class="chart-container relative w-full h-[400px]">
+                        <canvas id="impactChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="process" class="py-24 border-t border-gray-800">
+            <div class="container mx-auto px-8">
+                <h2 class="text-3xl mb-20 text-center">// SYSTEM_LOOP_FLOW</h2>
+                
+                <div class="process-flow max-w-2xl mx-auto">
+                    <div class="process-line"></div>
+                    </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-black text-gray-700 py-10 border-t border-gray-900">
+        <div class="container mx-auto px-8 text-center text-xs">
+            <p class="mb-2">AGROMIND_OS > **_ACCESS_PANEL**</p>
+            <p>// AgroMind Corporation. All Rights Reserved. (2025-Q4)</p>
+            <p class="mt-4 text-green-500">ERROR_LOG_0: 0 anomalies detected. System operational.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Data for dynamic content (Updated for Glitch-Core) ---
+            const processData = [
+                { icon: '📡', title: '01_ACQUISITION', text: 'IoT sensors and satellite imagery stream data to the core engine.' },
+                { icon: '🧠', title: '02_PROCESSING', text: 'Proprietary ML models clean, normalize, and interpret all incoming telemetry.' },
+                { icon: '💬', title: '03_INSIGHT', text: 'Actionable commands and probabilistic forecasts are generated for the farmer.' },
+                { icon: '✅', title: '04_INTERVENTION', text: 'Optimized machinery instructions and manual field reports are dispatched.' }
+            ];
+
+            const impactButtonsData = [
+                { id: 'yield', label: 'YIELD_X', active: true },
+                { id: 'efficiency', label: 'WATER_EFF', active: false },
+                { id: 'profit', label: 'REVENUE_LIFT', active: false },
+                { id: 'loss', label: 'LOSS_AUDIT', active: false }
+            ];
+
+            // --- Populate Process Steps (Vertical Timeline) ---
+            const processContainer = document.querySelector('.process-flow');
+            processData.forEach((item, index) => {
+                const step = document.createElement('div');
+                const isEven = index % 2 === 0;
+                step.className = `relative py-10 flex items-center ${isEven ? 'justify-start md:justify-end' : 'justify-start'}`;
+                step.setAttribute('data-aos', isEven ? 'fade-right' : 'fade-left');
+                step.style.transitionDelay = `${index * 150}ms`;
+
+                step.innerHTML = `
+                    <div class="process-dot top-0"></div>
+                    <div class="w-full md:w-1/2 ${isEven ? 'md:pr-12' : 'md:pl-12'} p-4 data-block">
+                        <h3 class="text-xl font-bold text-green-500 mb-2">${item.icon} ${item.title}</h3>
+                        <p class="text-gray-400 text-sm">${item.text}</p>
+                    </div>
+                `;
+                processContainer.appendChild(step);
+            });
+            // Final dot for the loop
+            const finalDot = document.createElement('div');
+            finalDot.className = 'process-dot absolute bottom-0';
+            processContainer.appendChild(finalDot);
+            
+            // --- Populate Impact Buttons ---
+            const impactButtonsContainer = document.getElementById('impact-buttons');
+            impactButtonsData.forEach(btn => {
+                const button = document.createElement('button');
+                button.dataset.impact = btn.id;
+                button.className = `impact-btn text-xs font-bold px-3 py-1.5 transition-colors border-2 ${btn.active ? 'bg-green-500 text-black border-green-500' : 'text-gray-500 border-gray-700 hover:text-green-500 hover:border-green-500'}`;
+                button.textContent = btn.label;
+                impactButtonsContainer.appendChild(button);
+            });
+
+            // --- Scroll-based Animations (AOS) ---
+            const aosObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('[data-aos]').forEach(el => aosObserver.observe(el));
+
+
+            // --- Chart.js Logic (Monochromatic Styling) ---
+            const chartColors = {
+                baseline: 'rgba(255, 255, 255, 0.1)',
+                agroMind: 'rgba(0, 255, 0, 0.7)'
+            };
+
+            const createGradient = (color) => {
+                const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0.1)');
+                return gradient;
+            };
+
+            const ctx = document.getElementById('impactChart').getContext('2d');
+            const impactDataMap = {
+                yield: { label: 'YIELD (Tons/Hectare)', values: [5.2, 8.8] },
+                efficiency: { label: 'WATER USAGE (Litres/Crop)', values: [1500, 750] },
+                profit: { label: 'REVENUE LIFT ($/Hectare)', values: [2000, 4500] },
+                loss: { label: 'LOSS REDUCTION (%)', values: [22, 5] }
+            };
+
+            let impactChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['BASELINE_TRADITIONAL', 'AGROMIND_OPTIMIZED'],
+                    datasets: [{
+                        label: impactDataMap.yield.label,
+                        data: impactDataMap.yield.values,
+                        backgroundColor: (context) => context.dataIndex === 0 ? chartColors.baseline : createGradient(chartColors.agroMind),
+                        borderColor: chartColors.agroMind,
+                        borderWidth: 1,
+                        borderRadius: 2,
+                        barThickness: 50,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: impactDataMap.yield.label, font: { size: 18, family: 'Roboto Mono' }, color: chartColors.agroMind, padding: { bottom: 20 } }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: 'rgba(255, 255, 255, 0.05)', drawBorder: false }, 
+                            ticks: { color: chartColors.agroMind, font: { size: 14 } } 
+                        },
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { color: 'var(--color-text)', font: { size: 14 } } 
+                        }
+                    }
+                }
+            });
+
+            document.querySelectorAll('.impact-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.impact-btn').forEach(b => {
+                        b.classList.remove('bg-green-500', 'text-black', 'border-green-500');
+                        b.classList.add('text-gray-500', 'border-gray-700', 'hover:text-green-500', 'hover:border-green-500');
+                    });
+                    btn.classList.add('bg-green-500', 'text-black', 'border-green-500');
+                    btn.classList.remove('text-gray-500', 'border-gray-700', 'hover:text-green-500', 'hover:border-green-500');
+
+                    const type = btn.dataset.impact;
+                    const { label, values } = impactDataMap[type];
+                    
+                    impactChart.options.plugins.title.text = `DISPLAY_METRIC: ${label}`;
+                    impactChart.data.datasets[0].label = label;
+                    impactChart.data.datasets[0].data = values;
+                    impactChart.data.datasets[0].backgroundColor = (context) => context.dataIndex === 0 ? chartColors.baseline : createGradient(chartColors.agroMind);
+                    impactChart.update();
+                });
+            });
+            
+            // --- Mobile Menu Placeholder (Not fully implemented for this minimalist design) ---
+            // The minimalist design omits a complex mobile menu to keep the OS-terminal aesthetic clean.
+        });
+    </script>
+</body>
+
+</html>
